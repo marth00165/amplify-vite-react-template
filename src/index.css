@@ -1,12 +1,30 @@
+:root {
+  --air-superiority-blue: #7c9eb2;
+  --ultra-violet: #52528c;
+  --russian-violet: #372554;
+  --dark-purple: #231123;
+  --black: #000000;
+
+  --gradient: linear-gradient(
+    180deg,
+    var(--air-superiority-blue),
+    var(--ultra-violet),
+    var(--russian-violet),
+    var(--dark-purple),
+    var(--black)
+  );
+}
+
 body {
   margin: 0;
-  background: linear-gradient(180deg, rgb(117, 81, 194), rgb(255, 255, 255));
+  background: var(--gradient);
   display: flex;
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   height: 100vh;
   width: 100vw;
   justify-content: center;
   align-items: center;
+  color: var(--air-superiority-blue);
 }
 
 main {
@@ -22,14 +40,16 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
+  background-color: var(--ultra-violet);
   color: white;
+  cursor: pointer;
+  transition: border-color 0.25s, background-color 0.25s;
 }
+
 button:hover {
-  border-color: #646cff;
+  background-color: var(--russian-violet);
 }
+
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
@@ -43,23 +63,29 @@ ul {
   display: flex;
   flex-direction: column;
   margin: 8px 0;
-  border: 1px solid black;
+  border: 1px solid var(--ultra-violet);
   gap: 1px;
-  background-color: black;
+  background-color: var(--ultra-violet);
   border-radius: 8px;
   overflow: auto;
 }
 
 li {
-  background-color: white;
+  background-color: var(--dark-purple);
   padding: 8px;
+  color: var(--air-superiority-blue);
 }
 
 li:hover {
-  background: #dadbf9;
+  background: var(--russian-violet);
 }
 
 a {
   font-weight: 800;
   text-decoration: none;
+  color: var(--air-superiority-blue);
+}
+
+a:hover {
+  text-decoration: underline;
 }
