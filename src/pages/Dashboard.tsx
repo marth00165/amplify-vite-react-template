@@ -1,5 +1,5 @@
 export interface DashboardProps {}
 
-export default function Dashboard(props: DashboardProps) {
+export default function Dashboard() {
   return <div></div>;
 }

@@ -1,7 +1,5 @@
-import * as React from 'react';
-
 export interface LoginProps {}
 
-export default function Login(props: LoginProps) {
+export default function Login() {
   return <div></div>;
 }
