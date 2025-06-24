@@ -9,8 +9,8 @@ import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
 const schema = a.schema({
   Transaction: a
     .model({
-      userId: a.string(),       // required: to link to the user
-      type: a.string(),         // e.g. 'income' | 'expense'
+      userId: a.string(),
+      type: a.string(),
       amount: a.float(),
       description: a.string(),
       createdAt: a.string(),
@@ -24,7 +24,15 @@ const schema = a.schema({
       isDone: a.boolean(),
     })
     .authorization((allow) => [allow.publicApiKey()]),
+
+  Wallet: a
+    .model({
+      userId: a.string(),
+      balance: a.float(),
+    })
+    .authorization((allow) => [allow.publicApiKey()]),
 });
+
 
 export type Schema = ClientSchema<typeof schema>;
 
