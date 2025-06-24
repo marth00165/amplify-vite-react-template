@@ -122,17 +122,6 @@ export default function GoalDetailModal({
     setSubtasks([...subtasks, { id: uuidv4(), name: '', isCompleted: false }]);
   };
 
-  const addTemporarySubtask = () => {
-    setSubtasks([
-      ...subtasks,
-      {
-        id: uuidv4(), // Temporary ID for UI rendering
-        name: '',
-        isCompleted: false,
-      },
-    ]);
-  };
-
   const updateSubtask = (index: number, field: keyof Subtask, value: any) => {
     const newSubtasks = [...subtasks];
     newSubtasks[index] = { ...newSubtasks[index], [field]: value };
