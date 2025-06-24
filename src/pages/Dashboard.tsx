@@ -10,6 +10,7 @@ import {
 import { Button } from '../components/themed-components';
 import AddExpenseModal from '../components/addExpenseModal';
 import TransactionList from '../components/transactionList';
+import GoalsSection from '../components/goals/goalsSection';
 
 const DashboardLayout = styled.div`
   display: grid;
@@ -203,16 +204,17 @@ export default function Dashboard() {
         <AddButton onClick={() => setShowModal(true)}>
           Add Transaction
         </AddButton>
+        <AddExpenseModal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          onSubmit={handleAddTransaction}
+        />
       </MainContent>
       <RightColumn>
-        <h2>Coming Soon</h2>
-        <p>Additional features will be available here.</p>
+        {user?.signInDetails?.loginId && (
+          <GoalsSection userId={user.signInDetails.loginId} />
+        )}
       </RightColumn>
-      <AddExpenseModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        onSubmit={handleAddTransaction}
-      />
     </DashboardLayout>
   );
 }

@@ -11,7 +11,6 @@ const schema = a.schema({
       createdAt: a.string(),
     })
     .authorization((allow) => [
-      // Only authenticated users can perform operations on their own data
       allow.owner().identityClaim("sub").to(["create", "read", "update", "delete"]),
     ]),
 
@@ -33,6 +32,31 @@ const schema = a.schema({
     .authorization((allow) => [
       allow.owner().identityClaim("sub").to(["create", "read", "update", "delete"]),
     ]),
+
+  Goal: a
+    .model({
+      userId: a.string().required(),
+      title: a.string().required(),
+      description: a.string(),
+      completionDate: a.string(),
+      isCompleted: a.boolean().required(),
+      subtasks: a.hasMany('Subtask', 'goalSubtasksId'),
+      createdAt: a.string(),
+    })
+    .authorization((allow) => [
+      allow.owner().identityClaim("sub").to(["create", "read", "update", "delete"]),
+    ]),
+
+  Subtask: a
+    .model({
+      name: a.string().required(),
+      isCompleted: a.boolean().required(),
+      goalSubtasksId: a.string(),
+      goal: a.belongsTo('Goal', 'goalSubtasksId'), // Add this line to establish the bidirectional relationship
+    })
+    .authorization((allow) => [
+      allow.owner().identityClaim("sub").to(["create", "read", "update", "delete"]),
+    ]),
 });
 
 export type Schema = ClientSchema<typeof schema>;
@@ -41,7 +65,6 @@ export const data = defineData({
   schema,
   authorizationModes: {
     defaultAuthorizationMode: "userPool",
-    // Keep API key for development or public read-only operations
     apiKeyAuthorizationMode: {
       expiresInDays: 30,
     },
