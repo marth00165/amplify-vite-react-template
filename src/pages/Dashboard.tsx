@@ -1,219 +1,227 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
-import { generateClient } from 'aws-amplify/data';
 import { useAuthenticator } from '@aws-amplify/ui-react';
-import type { Schema } from '../../amplify/data/resource';
+import {
+  addTransaction,
+  getWalletBalance,
+  getTransactions,
+} from '../api/transactions';
+import { Button } from '../components/themed-components';
+import AddExpenseModal from '../components/addExpenseModal';
 
-const client = generateClient<Schema>();
+const DashboardLayout = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  gap: 2rem;
+  padding: 2rem;
+  color: white;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const LeftColumn = styled.div`
+  background: rgba(82, 82, 140, 0.2);
+  padding: 1.5rem;
+  border-radius: 8px;
+`;
 
 const MainContent = styled.div`
-  padding: 2rem;
-  color: white;
-`;
-
-const AddButton = styled.button`
-  background: #52528c;
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 6px;
-  cursor: pointer;
-
-  &:hover {
-    background: #7c9eb2;
-  }
-`;
-
-const ModalBackdrop = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`;
-
-const ModalContent = styled.div`
-  background: #7c9eb2;
+  background: rgba(82, 82, 140, 0.1);
   padding: 2rem;
   border-radius: 8px;
-  width: 400px;
-  max-width: 90%;
-  color: white;
 `;
 
-const Field = styled.div`
-  margin-bottom: 1rem;
+const RightColumn = styled.div`
+  background: rgba(82, 82, 140, 0.2);
+  padding: 1.5rem;
+  border-radius: 8px;
+`;
 
-  label {
-    display: block;
-    margin-bottom: 0.25rem;
-  }
+const AddButton = styled(Button)``;
 
-  input,
-  select,
-  textarea {
-    width: 100%;
-    padding: 0.5rem;
-    border: none;
-    border-radius: 4px;
-  }
+const TransactionList = styled.div`
+  margin-top: 1rem;
+`;
+
+const TransactionItem = styled.div`
+  padding: 0.75rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  margin-bottom: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+`;
+
+const LoadMoreButton = styled(Button)`
+  width: 100%;
+  margin-top: 1rem;
+  background: rgba(82, 82, 140, 0.5);
 `;
 
 export default function Dashboard() {
   const { user } = useAuthenticator();
   const [balance, setBalance] = useState<number | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [transactionsLoading, setTransactionsLoading] = useState(false);
+  const [nextToken, setNextToken] = useState<string | undefined>(undefined);
 
-  const [amount, setAmount] = useState<string>('');
-  const [amountError, setAmountError] = useState<string>('');
-  const [type, setType] = useState<'income' | 'expense'>('income');
-  const [vendor, setVendor] = useState('');
-  const [notes, setNotes] = useState('');
-
-  useEffect(() => {
-    async function fetchWallet() {
+  const fetchTransactions = useCallback(
+    async (limit = 10) => {
       if (!user?.signInDetails?.loginId) return;
 
+      setTransactionsLoading(true);
+      try {
+        const userId = user.signInDetails.loginId;
+        const result = await getTransactions(userId, limit);
+
+        setTransactions(result.transactions);
+        setNextToken(result.nextToken ?? undefined);
+      } catch (error) {
+        console.error('Error fetching transactions:', error);
+      } finally {
+        setTransactionsLoading(false);
+      }
+    },
+    [user]
+  );
+
+  useEffect(() => {
+    async function fetchInitialData() {
+      if (!user?.signInDetails?.loginId) return;
       const userId = user.signInDetails.loginId;
 
-      const wallet = await client.models.Wallet.list({
-        filter: { userId: { eq: userId } },
-      });
+      const balance = await getWalletBalance(userId);
+      setBalance(balance);
 
-      if (wallet.data.length > 0) {
-        setBalance(wallet.data[0].balance);
-      } else {
-        const newWallet = await client.models.Wallet.create({
-          userId,
-          balance: 0,
-        });
-        setBalance(newWallet.data?.balance ?? 0);
-      }
+      await fetchTransactions();
     }
 
-    fetchWallet();
-  }, [user]);
+    fetchInitialData();
+  }, [user, fetchTransactions]);
 
-  const handleAddTransaction = async () => {
+  const loadMoreTransactions = useCallback(async () => {
+    if (!nextToken || !user?.signInDetails?.loginId) return;
+
+    setTransactionsLoading(true);
+    try {
+      const userId = user.signInDetails.loginId;
+      const result = await getTransactions(userId, 10, nextToken);
+
+      setTransactions((prev) => [...prev, ...result.transactions]);
+      setNextToken(result.nextToken ?? undefined);
+    } catch (error) {
+      console.error('Error loading more transactions:', error);
+    } finally {
+      setTransactionsLoading(false);
+    }
+  }, [nextToken, user]);
+
+  const handleAddTransaction = async (data: {
+    type: 'income' | 'expense';
+    amount: number;
+    vendor: string;
+    notes: string;
+  }) => {
     if (!user?.signInDetails?.loginId) return;
-    if (!amount || amount === '0') {
-      setAmountError('Please enter a valid amount');
-      return;
-    }
 
     const userId = user.signInDetails.loginId;
-    const numericAmount = Number(amount);
 
-    await client.models.Transaction.create({
-      userId,
-      type,
-      amount: numericAmount,
-      vendor,
-      notes,
-      createdAt: new Date().toISOString(),
-    });
+    try {
+      const newBalance = await addTransaction(
+        userId,
+        data.type,
+        data.amount,
+        data.vendor,
+        data.notes
+      );
 
-    const wallet = await client.models.Wallet.list({
-      filter: { userId: { eq: userId } },
-    });
+      if (newBalance !== null) {
+        setBalance(newBalance);
 
-    if (wallet.data.length > 0) {
-      const oldBalance = wallet.data[0].balance;
-      const adjustment = type === 'income' ? numericAmount : -numericAmount;
+        const newTransaction = {
+          id: `temp-${Date.now()}`,
+          userId,
+          type: data.type,
+          amount: data.amount,
+          vendor: data.vendor,
+          notes: data.notes,
+          createdAt: new Date().toISOString(),
+        };
 
-      await client.models.Wallet.update({
-        id: wallet.data[0].id,
-        balance: (oldBalance ?? 0) + adjustment,
-      });
+        setTransactions((prev) => [newTransaction, ...prev]);
 
-      setBalance((oldBalance ?? 0) + adjustment);
+        setTimeout(() => fetchTransactions(), 1000);
+      }
+
+      setShowModal(false);
+    } catch (error) {
+      console.error('Error adding transaction:', error);
+      alert('Failed to add transaction. Please try again.');
     }
-
-    setAmount('');
-    setAmountError('');
-    setVendor('');
-    setNotes('');
-    setShowModal(false);
   };
 
   return (
-    <MainContent>
-      <h1>Welcome to your Dashboard</h1>
-      <p>
-        Your Wallet Balance:{' '}
-        {balance !== null ? `$${balance.toFixed(2)}` : 'Loading...'}
-      </p>
-
-      <AddButton onClick={() => setShowModal(true)}>Add Transaction</AddButton>
-
-      {showModal && (
-        <ModalBackdrop onClick={() => setShowModal(false)}>
-          <ModalContent onClick={(e) => e.stopPropagation()}>
-            <h2>Add Transaction</h2>
-            <Field>
-              <label>Type:</label>
-              <select
-                value={type}
-                onChange={(e) => setType(e.target.value as any)}
-              >
-                <option value='income'>Income</option>
-                <option value='expense'>Expense</option>
-              </select>
-            </Field>
-            <Field>
-              <label>Amount:</label>
-              <input
-                type='number'
-                value={amount}
-                onChange={(e) => {
-                  setAmount(e.target.value);
-                  setAmountError(e.target.value ? '' : 'Amount is required');
-                }}
-              />
-              {amountError && (
+    <DashboardLayout>
+      <LeftColumn>
+        <h2>Recent Transactions</h2>
+        <TransactionList>
+          {transactionsLoading && transactions.length === 0 ? (
+            <p>Loading transactions...</p>
+          ) : transactions.length === 0 ? (
+            <p>No transactions found.</p>
+          ) : (
+            transactions.map((transaction) => (
+              <TransactionItem key={transaction.id}>
+                <div>
+                  <div>{transaction.vendor}</div>
+                  <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>
+                    {new Date(transaction.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
                 <div
                   style={{
-                    color: '#ff6b6b',
-                    fontSize: '0.8rem',
-                    marginTop: '0.25rem',
+                    color:
+                      transaction.type === 'income' ? '#4caf50' : '#f44336',
+                    fontWeight: 'bold',
                   }}
                 >
-                  {amountError}
+                  ${transaction.amount.toFixed(2)}
                 </div>
-              )}
-            </Field>
-            <Field>
-              <label>Vendor:</label>
-              <input
-                type='text'
-                value={vendor}
-                onChange={(e) => setVendor(e.target.value)}
-              />
-            </Field>
-            <Field>
-              <label>Notes (optional):</label>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-              ></textarea>
-            </Field>
-            <AddButton
-              onClick={handleAddTransaction}
-              disabled={!amount || amount === '0'}
-              style={{
-                opacity: !amount || amount === '0' ? 0.5 : 1,
-                cursor: !amount || amount === '0' ? 'not-allowed' : 'pointer',
-              }}
+              </TransactionItem>
+            ))
+          )}
+          {nextToken && (
+            <LoadMoreButton
+              onClick={loadMoreTransactions}
+              disabled={transactionsLoading}
             >
-              Save
-            </AddButton>
-          </ModalContent>
-        </ModalBackdrop>
-      )}
-    </MainContent>
+              {transactionsLoading ? 'Loading...' : 'Load More'}
+            </LoadMoreButton>
+          )}
+        </TransactionList>
+      </LeftColumn>
+      <MainContent>
+        <h1>Welcome to your Dashboard</h1>
+        <p>
+          Your Wallet Balance:{' '}
+          {balance !== null ? `$${balance.toFixed(2)}` : 'Loading...'}
+        </p>
+        <AddButton onClick={() => setShowModal(true)}>
+          Add Transaction
+        </AddButton>
+      </MainContent>
+      <RightColumn>
+        <h2>Coming Soon</h2>
+        <p>Additional features will be available here.</p>
+      </RightColumn>
+      <AddExpenseModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onSubmit={handleAddTransaction}
+      />
+    </DashboardLayout>
   );
 }
