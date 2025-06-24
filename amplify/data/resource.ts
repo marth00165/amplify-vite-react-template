@@ -7,15 +7,16 @@ import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
  */
 
 const schema = a.schema({
-  Transaction: a
-    .model({
-      userId: a.string(),
-      type: a.string(),
-      amount: a.float(),
-      description: a.string(),
-      createdAt: a.string(),
-    })
-    .authorization((allow) => [allow.publicApiKey()]),
+Transaction: a
+  .model({
+    userId: a.string().required(),
+    type: a.string().required(),
+    amount: a.float().required(),
+    vendor: a.string().required(),
+    notes: a.string(),
+    createdAt: a.string(),
+  })
+  .authorization((allow) => [allow.publicApiKey()]),
 
   Todo: a
     .model({
