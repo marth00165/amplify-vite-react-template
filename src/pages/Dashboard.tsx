@@ -5,9 +5,11 @@ import {
   addTransaction,
   getWalletBalance,
   getTransactions,
+  deleteTransaction,
 } from '../api/transactions';
 import { Button } from '../components/themed-components';
 import AddExpenseModal from '../components/addExpenseModal';
+import TransactionList from '../components/transactionList';
 
 const DashboardLayout = styled.div`
   display: grid;
@@ -40,25 +42,6 @@ const RightColumn = styled.div`
 `;
 
 const AddButton = styled(Button)``;
-
-const TransactionList = styled.div`
-  margin-top: 1rem;
-`;
-
-const TransactionItem = styled.div`
-  padding: 0.75rem;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.1);
-  margin-bottom: 0.75rem;
-  display: flex;
-  justify-content: space-between;
-`;
-
-const LoadMoreButton = styled(Button)`
-  width: 100%;
-  margin-top: 1rem;
-  background: rgba(82, 82, 140, 0.5);
-`;
 
 export default function Dashboard() {
   const { user } = useAuthenticator();
@@ -119,12 +102,15 @@ export default function Dashboard() {
     }
   }, [nextToken, user]);
 
-  const handleAddTransaction = async (data: {
-    type: 'income' | 'expense';
-    amount: number;
-    vendor: string;
-    notes: string;
-  }) => {
+  const handleAddTransaction = async (
+    data: {
+      type: 'income' | 'expense';
+      amount: number;
+      vendor: string;
+      notes: string;
+    },
+    keepOpen: boolean
+  ) => {
     if (!user?.signInDetails?.loginId) return;
 
     const userId = user.signInDetails.loginId;
@@ -156,10 +142,43 @@ export default function Dashboard() {
         setTimeout(() => fetchTransactions(), 1000);
       }
 
-      setShowModal(false);
+      // Only close if not keeping open
+      if (!keepOpen) {
+        setShowModal(false);
+      }
     } catch (error) {
       console.error('Error adding transaction:', error);
       alert('Failed to add transaction. Please try again.');
+    }
+  };
+
+  const handleDeleteTransaction = async (transaction: any) => {
+    if (!user?.signInDetails?.loginId) return;
+
+    // Confirm before deleting
+    const confirm = window.confirm(
+      `Are you sure you want to delete this ${
+        transaction.type
+      } of $${transaction.amount.toFixed(2)}?`
+    );
+    if (!confirm) return;
+
+    try {
+      const newBalance = await deleteTransaction(
+        transaction.id,
+        user.signInDetails.loginId,
+        transaction.type as 'income' | 'expense',
+        transaction.amount
+      );
+
+      if (newBalance !== null) {
+        setBalance(newBalance);
+        // Remove the transaction from the list
+        setTransactions((prev) => prev.filter((t) => t.id !== transaction.id));
+      }
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      alert('Failed to delete transaction. Please try again.');
     }
   };
 
@@ -167,41 +186,13 @@ export default function Dashboard() {
     <DashboardLayout>
       <LeftColumn>
         <h2>Recent Transactions</h2>
-        <TransactionList>
-          {transactionsLoading && transactions.length === 0 ? (
-            <p>Loading transactions...</p>
-          ) : transactions.length === 0 ? (
-            <p>No transactions found.</p>
-          ) : (
-            transactions.map((transaction) => (
-              <TransactionItem key={transaction.id}>
-                <div>
-                  <div>{transaction.vendor}</div>
-                  <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>
-                    {new Date(transaction.createdAt).toLocaleDateString()}
-                  </div>
-                </div>
-                <div
-                  style={{
-                    color:
-                      transaction.type === 'income' ? '#4caf50' : '#f44336',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  ${transaction.amount.toFixed(2)}
-                </div>
-              </TransactionItem>
-            ))
-          )}
-          {nextToken && (
-            <LoadMoreButton
-              onClick={loadMoreTransactions}
-              disabled={transactionsLoading}
-            >
-              {transactionsLoading ? 'Loading...' : 'Load More'}
-            </LoadMoreButton>
-          )}
-        </TransactionList>
+        <TransactionList
+          transactions={transactions}
+          isLoading={transactionsLoading}
+          nextToken={nextToken}
+          onLoadMore={loadMoreTransactions}
+          onDeleteTransaction={handleDeleteTransaction}
+        />
       </LeftColumn>
       <MainContent>
         <h1>Welcome to your Dashboard</h1>

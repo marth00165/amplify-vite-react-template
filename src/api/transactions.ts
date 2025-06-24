@@ -103,3 +103,14 @@ export async function getTransactionById(id: string) {
   const transaction = await client.models.Transaction.get({ id });
   return transaction.data;
 }
+
+// Add this new function to your transactions.ts file
+export async function deleteTransaction(transactionId: string, userId: string, type: 'income' | 'expense', amount: number) {
+  // Delete the transaction
+  await client.models.Transaction.delete({ id: transactionId });
+  
+  // Update wallet balance by reversing the transaction
+  // For income, we subtract; for expense, we add back
+  const reverseType = type === 'income' ? 'expense' : 'income';
+  return await updateWalletBalance(userId, amount, reverseType);
+}

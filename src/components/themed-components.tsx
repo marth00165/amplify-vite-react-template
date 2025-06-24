@@ -22,6 +22,7 @@ export const ModalBackdrop = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 1100; // Higher than navbar's z-index of 1000
 `;
 
 export const ModalContent = styled.div`

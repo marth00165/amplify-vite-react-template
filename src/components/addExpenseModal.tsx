@@ -9,15 +9,43 @@ import styled from 'styled-components';
 
 const AddButton = styled(Button)``;
 
+const CloseButton = styled(Button)`
+  background: rgba(255, 255, 255, 0.2);
+  margin-right: 10px;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+`;
+
+const ButtonContainer = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+`;
+
+const CheckboxContainer = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+
+  input {
+    margin-right: 0.5rem;
+  }
+`;
+
 interface AddExpenseModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: {
-    type: 'income' | 'expense';
-    amount: number;
-    vendor: string;
-    notes: string;
-  }) => Promise<void>;
+  onSubmit: (
+    data: {
+      type: 'income' | 'expense';
+      amount: number;
+      vendor: string;
+      notes: string;
+    },
+    keepOpen: boolean
+  ) => Promise<void>; // Add keepOpen parameter
   initialType?: 'income' | 'expense';
 }
 
@@ -32,6 +60,7 @@ export default function AddExpenseModal({
   const [type, setType] = useState<'income' | 'expense'>(initialType);
   const [vendor, setVendor] = useState('');
   const [notes, setNotes] = useState('');
+  const [addMultiple, setAddMultiple] = useState(false);
 
   const handleSubmit = async () => {
     if (!amount || amount === '0') {
@@ -40,14 +69,17 @@ export default function AddExpenseModal({
     }
 
     try {
-      await onSubmit({
-        type,
-        amount: Number(amount),
-        vendor,
-        notes,
-      });
+      await onSubmit(
+        {
+          type,
+          amount: Number(amount),
+          vendor,
+          notes,
+        },
+        addMultiple
+      ); // Pass the addMultiple state
 
-      // Reset form after successful submission
+      // Reset form fields but don't close
       setAmount('');
       setAmountError('');
       setVendor('');
@@ -57,10 +89,20 @@ export default function AddExpenseModal({
     }
   };
 
+  const handleClose = () => {
+    // Reset form when closing
+    setAmount('');
+    setAmountError('');
+    setVendor('');
+    setNotes('');
+    setAddMultiple(false);
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   return (
-    <ModalBackdrop onClick={onClose}>
+    <ModalBackdrop onClick={handleClose}>
       <ModalContent onClick={(e) => e.stopPropagation()}>
         <h2>Add Transaction</h2>
         <Field>
@@ -115,16 +157,30 @@ export default function AddExpenseModal({
             onChange={(e) => setNotes(e.target.value)}
           ></textarea>
         </Field>
-        <AddButton
-          onClick={handleSubmit}
-          disabled={!amount || amount === '0'}
-          style={{
-            opacity: !amount || amount === '0' ? 0.5 : 1,
-            cursor: !amount || amount === '0' ? 'not-allowed' : 'pointer',
-          }}
-        >
-          Save
-        </AddButton>
+
+        <CheckboxContainer>
+          <input
+            type='checkbox'
+            id='addMultiple'
+            checked={addMultiple}
+            onChange={() => setAddMultiple(!addMultiple)}
+          />
+          <label htmlFor='addMultiple'>Keep adding transactions</label>
+        </CheckboxContainer>
+
+        <ButtonContainer>
+          <CloseButton onClick={handleClose}>Cancel</CloseButton>
+          <AddButton
+            onClick={handleSubmit}
+            disabled={!amount || amount === '0'}
+            style={{
+              opacity: !amount || amount === '0' ? 0.5 : 1,
+              cursor: !amount || amount === '0' ? 'not-allowed' : 'pointer',
+            }}
+          >
+            Save
+          </AddButton>
+        </ButtonContainer>
       </ModalContent>
     </ModalBackdrop>
   );
