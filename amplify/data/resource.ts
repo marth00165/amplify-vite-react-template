@@ -1,6 +1,24 @@
 import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
 
 const schema = a.schema({
+  User: a
+    .model({
+      cognitoId: a.string().required(),
+      email: a.string().required(),
+      username: a.string(),
+      displayName: a.string(),
+      profilePicture: a.string(),
+      createdAt: a.string().required(),
+      lastLogin: a.string().required(),
+      wallet: a.hasOne('Wallet', 'userId'),
+      transactions: a.hasMany('Transaction', 'userId'),
+      goals: a.hasMany('Goal', 'userId'),
+    })
+    .authorization((allow) => [
+      allow.owner().identityClaim("sub").to(["create", "read", "update", "delete"]),
+      allow.publicApiKey().to(["read"]),
+    ]),
+
   Transaction: a
     .model({
       userId: a.string().required(),
@@ -9,6 +27,7 @@ const schema = a.schema({
       vendor: a.string().required(),
       notes: a.string(),
       createdAt: a.string(),
+      user: a.belongsTo('User', 'userId'),
     })
     .authorization((allow) => [
       allow.owner().identityClaim("sub").to(["create", "read", "update", "delete"]),
@@ -26,8 +45,9 @@ const schema = a.schema({
 
   Wallet: a
     .model({
-      userId: a.string(),
-      balance: a.float(),
+      userId: a.string().required(),
+      balance: a.float().required(),
+      user: a.belongsTo('User', 'userId'),
     })
     .authorization((allow) => [
       allow.owner().identityClaim("sub").to(["create", "read", "update", "delete"]),
@@ -42,6 +62,7 @@ const schema = a.schema({
       isCompleted: a.boolean().required(),
       subtasks: a.hasMany('Subtask', 'goalSubtasksId'),
       createdAt: a.string(),
+      user: a.belongsTo('User', 'userId'),
     })
     .authorization((allow) => [
       allow.owner().identityClaim("sub").to(["create", "read", "update", "delete"]),
@@ -52,7 +73,7 @@ const schema = a.schema({
       name: a.string().required(),
       isCompleted: a.boolean().required(),
       goalSubtasksId: a.string(),
-      goal: a.belongsTo('Goal', 'goalSubtasksId'), // Add this line to establish the bidirectional relationship
+      goal: a.belongsTo('Goal', 'goalSubtasksId'),
     })
     .authorization((allow) => [
       allow.owner().identityClaim("sub").to(["create", "read", "update", "delete"]),

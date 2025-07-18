@@ -11,6 +11,7 @@ import { Button } from '../components/themed-components';
 import AddExpenseModal from '../components/addExpenseModal';
 import TransactionList from '../components/transactionList';
 import GoalsSection from '../components/goals/goalsSection';
+import { useUser } from '../context/UserContext';
 
 const DashboardLayout = styled.div`
   display: grid;
@@ -45,55 +46,60 @@ const RightColumn = styled.div`
 const AddButton = styled(Button)``;
 
 export default function Dashboard() {
-  const { user } = useAuthenticator();
+  const { currentUser } = useUser();
   const [balance, setBalance] = useState<number | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [transactionsLoading, setTransactionsLoading] = useState(false);
   const [nextToken, setNextToken] = useState<string | undefined>(undefined);
 
-  const fetchTransactions = useCallback(
-    async (limit = 10) => {
-      if (!user?.signInDetails?.loginId) return;
-
-      setTransactionsLoading(true);
-      try {
-        const userId = user.signInDetails.loginId;
-        const result = await getTransactions(userId, limit);
-
-        setTransactions(result.transactions);
-        setNextToken(result.nextToken ?? undefined);
-      } catch (error) {
-        console.error('Error fetching transactions:', error);
-      } finally {
-        setTransactionsLoading(false);
-      }
-    },
-    [user]
-  );
-
+  // Load balance when user changes
   useEffect(() => {
-    async function fetchInitialData() {
-      if (!user?.signInDetails?.loginId) return;
-      const userId = user.signInDetails.loginId;
+    async function fetchBalance() {
+      if (!currentUser?.cognitoId) return;
 
-      const balance = await getWalletBalance(userId);
-      setBalance(balance);
-
-      await fetchTransactions();
+      try {
+        const balance = await getWalletBalance(currentUser.cognitoId);
+        setBalance(balance);
+      } catch (error) {
+        console.error('Error fetching wallet balance:', error);
+      }
     }
 
-    fetchInitialData();
-  }, [user, fetchTransactions]);
+    fetchBalance();
+  }, [currentUser]);
 
+  const fetchTransactions = useCallback(async (userId: string, limit = 10) => {
+    setTransactionsLoading(true);
+    try {
+      const result = await getTransactions(userId, limit);
+
+      setTransactions(result.transactions);
+      setNextToken(result.nextToken ?? undefined);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+    } finally {
+      setTransactionsLoading(false);
+    }
+  }, []);
+
+  // Load transactions when user changes
+  useEffect(() => {
+    if (!currentUser?.cognitoId) return;
+    fetchTransactions(currentUser.cognitoId);
+  }, [currentUser, fetchTransactions]);
+
+  // Load more transactions
   const loadMoreTransactions = useCallback(async () => {
-    if (!nextToken || !user?.signInDetails?.loginId) return;
+    if (!nextToken || !currentUser?.cognitoId) return;
 
     setTransactionsLoading(true);
     try {
-      const userId = user.signInDetails.loginId;
-      const result = await getTransactions(userId, 10, nextToken);
-
+      const result = await getTransactions(
+        currentUser.cognitoId,
+        10,
+        nextToken
+      );
       setTransactions((prev) => [...prev, ...result.transactions]);
       setNextToken(result.nextToken ?? undefined);
     } catch (error) {
@@ -101,8 +107,9 @@ export default function Dashboard() {
     } finally {
       setTransactionsLoading(false);
     }
-  }, [nextToken, user]);
+  }, [nextToken, currentUser]);
 
+  // Add transaction
   const handleAddTransaction = async (
     data: {
       type: 'income' | 'expense';
@@ -112,13 +119,11 @@ export default function Dashboard() {
     },
     keepOpen: boolean
   ) => {
-    if (!user?.signInDetails?.loginId) return;
-
-    const userId = user.signInDetails.loginId;
+    if (!currentUser?.cognitoId) return;
 
     try {
       const newBalance = await addTransaction(
-        userId,
+        currentUser.cognitoId,
         data.type,
         data.amount,
         data.vendor,
@@ -127,23 +132,10 @@ export default function Dashboard() {
 
       if (newBalance !== null) {
         setBalance(newBalance);
-
-        const newTransaction = {
-          id: `temp-${Date.now()}`,
-          userId,
-          type: data.type,
-          amount: data.amount,
-          vendor: data.vendor,
-          notes: data.notes,
-          createdAt: new Date().toISOString(),
-        };
-
-        setTransactions((prev) => [newTransaction, ...prev]);
-
-        setTimeout(() => fetchTransactions(), 1000);
+        // Refetch transactions instead of adding a temporary one
+        await fetchTransactions(currentUser.cognitoId);
       }
 
-      // Only close if not keeping open
       if (!keepOpen) {
         setShowModal(false);
       }
@@ -154,7 +146,7 @@ export default function Dashboard() {
   };
 
   const handleDeleteTransaction = async (transaction: any) => {
-    if (!user?.signInDetails?.loginId) return;
+    if (!currentUser?.cognitoId) return;
 
     // Confirm before deleting
     const confirm = window.confirm(
@@ -167,7 +159,7 @@ export default function Dashboard() {
     try {
       const newBalance = await deleteTransaction(
         transaction.id,
-        user.signInDetails.loginId,
+        currentUser.cognitoId,
         transaction.type as 'income' | 'expense',
         transaction.amount
       );
@@ -211,8 +203,8 @@ export default function Dashboard() {
         />
       </MainContent>
       <RightColumn>
-        {user?.signInDetails?.loginId && (
-          <GoalsSection userId={user.signInDetails.loginId} />
+        {currentUser?.cognitoId && (
+          <GoalsSection userId={currentUser.cognitoId} />
         )}
       </RightColumn>
     </DashboardLayout>

@@ -1,5 +1,7 @@
 import styled from 'styled-components';
 import { Button } from './themed-components';
+import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 const TransactionListContainer = styled.div`
   margin-top: 1rem;
@@ -34,6 +36,7 @@ const TransactionItem = styled.div`
   margin-bottom: 0.75rem;
   display: flex;
   justify-content: space-between;
+  position: relative; /* Ensure positioned elements inside have a relative context */
 `;
 
 const DeleteButton = styled.button`
@@ -59,12 +62,57 @@ const LoadMoreButton = styled(Button)`
   background: rgba(82, 82, 140, 0.5);
 `;
 
+const InfoIcon = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 12px;
+  margin-left: 8px;
+  cursor: help;
+  position: relative;
+  overflow: visible; /* Allow the tooltip to escape */
+`;
+
+// Modified Tooltip for portal approach
+const TooltipPortal = styled.div<{ visible: boolean }>`
+  position: fixed;
+  background: #2a2a4a;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  width: max-content;
+  max-width: 250px;
+  z-index: 9999;
+  opacity: ${(props) => (props.visible ? 1 : 0)};
+  transition: opacity 0.2s;
+  pointer-events: none;
+
+  &:after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: #2a2a4a transparent transparent transparent;
+  }
+`;
+
 interface Transaction {
   id: string;
   vendor: string;
   amount: number;
   type: 'income' | 'expense';
   createdAt: string;
+  notes?: string; // Add notes to the interface
 }
 
 interface TransactionListProps {
@@ -82,8 +130,51 @@ export default function TransactionList({
   onLoadMore,
   onDeleteTransaction,
 }: TransactionListProps) {
+  const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
+  const [tooltipContent, setTooltipContent] = useState('');
+  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Function to update tooltip position
+  const updateTooltipPosition = (iconElement: HTMLElement) => {
+    const rect = iconElement.getBoundingClientRect();
+    setTooltipPosition({
+      top: rect.top - 40, // Position above the icon with some spacing
+      left: rect.left + rect.width / 2, // Center the tooltip
+    });
+  };
+
+  // Handle scroll events to update tooltip position
+  useEffect(() => {
+    if (!activeTooltip) return;
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const iconElement = document.getElementById(`info-icon-${activeTooltip}`);
+      if (iconElement) {
+        updateTooltipPosition(iconElement);
+      } else {
+        setActiveTooltip(null); // Hide if icon is not found
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+    };
+  }, [activeTooltip]);
+
+  const handleShowTooltip = (transaction: Transaction, e: React.MouseEvent) => {
+    const iconElement = e.currentTarget as HTMLElement;
+    updateTooltipPosition(iconElement);
+    setTooltipContent(transaction.notes || '');
+    setActiveTooltip(transaction.id);
+  };
+
   return (
-    <TransactionListContainer>
+    <TransactionListContainer ref={containerRef}>
       {isLoading && transactions.length === 0 ? (
         <p>Loading transactions...</p>
       ) : transactions.length === 0 ? (
@@ -102,10 +193,22 @@ export default function TransactionList({
                 style={{
                   color: transaction.type === 'income' ? '#4caf50' : '#f44336',
                   fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
                 }}
               >
                 ${transaction.amount.toFixed(2)}
+                {transaction.notes && (
+                  <InfoIcon
+                    id={`info-icon-${transaction.id}`}
+                    onMouseEnter={(e) => handleShowTooltip(transaction, e)}
+                    onMouseLeave={() => setActiveTooltip(null)}
+                  >
+                    i
+                  </InfoIcon>
+                )}
               </div>
+
               {onDeleteTransaction && (
                 <DeleteButton
                   onClick={() => onDeleteTransaction(transaction)}
@@ -118,6 +221,23 @@ export default function TransactionList({
           </TransactionItem>
         ))
       )}
+
+      {/* Render tooltip using portal */}
+      {activeTooltip &&
+        createPortal(
+          <TooltipPortal
+            visible={true}
+            style={{
+              top: `${tooltipPosition.top}px`,
+              left: `${tooltipPosition.left}px`,
+              transform: 'translateX(-50%)', // Center horizontally
+            }}
+          >
+            {tooltipContent}
+          </TooltipPortal>,
+          document.body
+        )}
+
       {nextToken && (
         <LoadMoreButton onClick={onLoadMore} disabled={isLoading}>
           {isLoading ? 'Loading...' : 'Load More'}

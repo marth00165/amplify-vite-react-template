@@ -1,16 +1,20 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { UserProvider } from './context/UserContext';
 
-import Dashboard from './pages/Dashboard.tsx';
-import Navbar from './components/navbar.tsx';
+import Navbar from './components/navbar';
+import Dashboard from './pages/Dashboard';
+import ProfilePage from './pages/ProfilePage';
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Navbar />
-      <Routes>
-        <Route path='/' element={<Dashboard />} />
-        <Route path='*' element={<Navigate to='/' replace />} />
-      </Routes>
-    </BrowserRouter>
+    <UserProvider>
+      <Router>
+        <Navbar />
+        <Routes>
+          <Route path='/' element={<Dashboard />} />
+          <Route path='/profile' element={<ProfilePage />} />
+        </Routes>
+      </Router>
+    </UserProvider>
   );
 }

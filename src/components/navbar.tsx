@@ -2,7 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import { fetchUserAttributes } from 'aws-amplify/auth';
+import { Link } from 'react-router-dom';
 import UserProfileModal from './profile/userProfileModal';
+import ProfileDropdown from './profile/ProfileDropdown';
+import { getWalletBalance } from '../api/transactions';
 
 const NavbarContainer = styled.nav`
   position: fixed;
@@ -17,9 +20,19 @@ const NavbarContainer = styled.nav`
   z-index: 1000;
 `;
 
-const Brand = styled.h1`
+const BrandLink = styled(Link)`
+  text-decoration: none !important;
   color: white;
   font-size: 1.5rem;
+  transition: text-shadow 0.3s ease;
+
+  &:hover,
+  &:focus,
+  &:active,
+  &:visited {
+    text-decoration: none !important;
+    text-shadow: 0 0 10px rgba(82, 82, 140, 0.8), 0 0 20px rgba(2, 2, 9, 0.5);
+  }
 `;
 
 const Profile = styled.div`
@@ -41,42 +54,15 @@ const ProfileIcon = styled.button`
   cursor: pointer;
 `;
 
-const Dropdown = styled.div`
-  position: absolute;
-  top: 50px;
-  right: 0;
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-`;
-
-const DropdownButton = styled.button`
-  background: #7c9eb2;
-  color: white;
-  border: none;
-  padding: 1rem;
-  cursor: pointer;
-  text-align: left;
-  width: 100px;
-  height: 50px;
-  margin: 5px;
-  font-size: 10px;
-  &:hover {
-    background: #52528c;
-  }
-`;
-
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [displayName, setDisplayName] = useState('User');
+  const [email, setEmail] = useState('');
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const { signOut, user } = useAuthenticator();
 
-  // Convert to a callback so we can reuse it
+  // Load user attributes
   const loadUserAttributes = useCallback(async () => {
     try {
       const attributes = await fetchUserAttributes();
@@ -86,23 +72,42 @@ export default function Navbar() {
         // Fall back to email address (before the @)
         setDisplayName(user.signInDetails.loginId.split('@')[0]);
       }
+
+      // Set email
+      if (attributes.email) {
+        setEmail(attributes.email);
+      } else if (user?.signInDetails?.loginId) {
+        setEmail(user.signInDetails.loginId);
+      }
     } catch (error) {
       console.error('Error fetching user attributes:', error);
     }
   }, [user]);
 
+  // Fetch wallet balance
+  const fetchWalletBalance = useCallback(async () => {
+    if (!user?.signInDetails?.loginId) return;
+
+    try {
+      const balance = await getWalletBalance(user.signInDetails.loginId);
+      setWalletBalance(balance);
+    } catch (error) {
+      console.error('Error fetching wallet balance:', error);
+      setWalletBalance(0); // Default to 0 if there's an error
+    }
+  }, [user]);
+
   useEffect(() => {
     loadUserAttributes();
-  }, [loadUserAttributes]);
+    fetchWalletBalance();
+  }, [loadUserAttributes, fetchWalletBalance]);
 
   const handleEditProfile = () => {
-    setIsOpen(false); // Close dropdown
-    setShowProfileModal(true); // Open profile modal
+    setIsOpen(false);
+    setShowProfileModal(true);
   };
 
-  // Handler for when profile is updated in the modal
   const handleProfileUpdate = () => {
-    // Reload user attributes to update the display name
     loadUserAttributes();
   };
 
@@ -112,21 +117,25 @@ export default function Navbar() {
   return (
     <>
       <NavbarContainer>
-        <Brand>💰 {displayName}'s Severance Survivor</Brand>
+        <BrandLink to='/'>💰 {displayName}'s Severance Survivor</BrandLink>
         <Profile>
           <ProfileIcon onClick={() => setIsOpen(!isOpen)}>
             {profileInitial}
           </ProfileIcon>
+
           {isOpen && (
-            <Dropdown>
-              <DropdownButton onClick={handleEditProfile}>
-                Edit Profile
-              </DropdownButton>
-              <DropdownButton onClick={signOut}>Log out</DropdownButton>
-            </Dropdown>
+            <ProfileDropdown
+              displayName={displayName}
+              email={email}
+              walletBalance={walletBalance}
+              onEditProfile={handleEditProfile}
+              onSignOut={signOut}
+              onClose={() => setIsOpen(false)}
+            />
           )}
         </Profile>
       </NavbarContainer>
+
       <UserProfileModal
         isOpen={showProfileModal}
         onClose={() => setShowProfileModal(false)}
