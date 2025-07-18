@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
-import { useAuthenticator } from '@aws-amplify/ui-react';
 import {
   addTransaction,
   getWalletBalance,

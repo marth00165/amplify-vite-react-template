@@ -124,15 +124,6 @@ const CancelButton = styled(EditButton)`
   }
 `;
 
-// Type for user profile data
-interface UserProfile {
-  username: string;
-  email?: string;
-  name?: string;
-  phone_number?: string;
-  picture?: string;
-}
-
 const ProfilePage: React.FC = () => {
   const { currentUser, isLoading, error, refreshUser } = useUser();
   const [isEditing, setIsEditing] = useState(false);
@@ -193,7 +184,8 @@ const ProfilePage: React.FC = () => {
           <ProfileImageContainer>
             <ProfileImage
               src={
-                currentUser.profilePicture || 'https://via.placeholder.com/150'
+                (currentUser as any).profilePicture ||
+                'https://via.placeholder.com/150'
               }
               alt='Profile'
             />
@@ -242,11 +234,10 @@ const ProfilePage: React.FC = () => {
                 <p>
                   <strong>Email:</strong> {currentUser.email}
                 </p>
-                {currentUser.phone_number && (
-                  <p>
-                    <strong>Phone:</strong> {currentUser.phone_number}
-                  </p>
-                )}
+                <p>
+                  <strong>Member Since:</strong>{' '}
+                  {new Date(currentUser.createdAt).toLocaleDateString()}
+                </p>
                 <EditButton onClick={() => setIsEditing(true)}>
                   Edit Profile
                 </EditButton>
