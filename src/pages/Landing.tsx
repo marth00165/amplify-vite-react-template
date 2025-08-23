@@ -1,5 +1,3 @@
-export interface ILandingProps {}
-
-export default function Landing(props: ILandingProps) {
+export default function Landing() {
   return <div>Hello World</div>;
 }
