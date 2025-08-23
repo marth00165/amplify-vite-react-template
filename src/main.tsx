@@ -1,3 +1,4 @@
+// main.tsx
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
@@ -14,11 +15,11 @@ Amplify.configure(outputs);
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ThemeProvider theme={theme}>
-      <Authenticator variation='modal'>
+      <Authenticator.Provider>
         <StyledThemeProvider theme={theme}>
           <App />
         </StyledThemeProvider>
-      </Authenticator>
+      </Authenticator.Provider>
     </ThemeProvider>
   </React.StrictMode>
 );
