@@ -5,7 +5,7 @@ import {
 } from './useCountDownTimer';
 
 export function Timer() {
-  const [input, setInput] = useState<number>(60);
+  const [input, setInput] = useState<string>('60');
   const {
     seconds,
     isComplete,
@@ -14,18 +14,17 @@ export function Timer() {
     pause,
     reset,
     setSeconds,
-  }: UseCountDownTimerReturn = useCountDownTimer(input, () => {
+  }: UseCountDownTimerReturn = useCountDownTimer(Number(input) || 0, () => {
     alert("Time's up!");
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseInt(e.target.value, 10);
-    setInput(isNaN(val) ? 0 : val);
+    setInput(e.target.value.replace(/^0+/, '') || ''); // Remove leading zeros
   };
 
   const handleSet = () => {
-    reset(input);
-    setSeconds(input);
+    reset(Number(input) || 0);
+    setSeconds(Number(input) || 0);
   };
 
   return (
@@ -51,7 +50,7 @@ export function Timer() {
         <button onClick={pause} disabled={!isRunning}>
           Pause
         </button>
-        <button onClick={() => reset(input)}>Reset</button>
+        <button onClick={() => reset(Number(input) || 0)}>Reset</button>
       </div>
       {isComplete && (
         <div style={{ color: 'red', marginTop: 12 }}>Time's up!</div>
