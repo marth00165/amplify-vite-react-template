@@ -10,7 +10,9 @@ import ProtectedRoute from './routes/protectedRoute';
 
 // Example public page
 import Landing from './pages/Landing';
-import Kim from './pages/Kim';
+import StateManagementPractice from './pages/StateManagementPractice';
+import ApiConcepts from './pages/ApiConcepts';
+import Timer from './pages/countDownApp/Timer';
 
 export default function App() {
   return (
@@ -21,8 +23,12 @@ export default function App() {
           {/* Public routes */}
           <Route path='/landing' element={<Landing />} />
           <Route path='/signin' element={<SignInPage />} />
-          <Route path='/kim' element={<Kim />} />
-
+          <Route
+            path='/stateManagement'
+            element={<StateManagementPractice />}
+          />
+          <Route path='/apiConcepts' element={<ApiConcepts />} />
+          <Route path='/timer' element={<Timer />} />
           {/* Protected routes */}
           <Route element={<ProtectedRoute />}>
             <Route path='/' element={<Dashboard />} />

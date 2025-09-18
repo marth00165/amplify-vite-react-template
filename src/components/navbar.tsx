@@ -113,15 +113,18 @@ export default function Navbar() {
 
   // First letter of display name for the profile icon
   const profileInitial = displayName?.[0]?.toUpperCase() || 'U';
-
   return (
     <>
       <NavbarContainer>
-        <BrandLink to='/'>💰 {displayName}'s Severance Survivor</BrandLink>
+        <BrandLink to='/'>
+          💰 {user ? `${displayName}'s` : ''} Severance Survivor
+        </BrandLink>
         <Profile>
-          <ProfileIcon onClick={() => setIsOpen(!isOpen)}>
-            {profileInitial}
-          </ProfileIcon>
+          {user && (
+            <ProfileIcon onClick={() => setIsOpen(!isOpen)}>
+              {profileInitial}
+            </ProfileIcon>
+          )}
 
           {isOpen && (
             <ProfileDropdown
