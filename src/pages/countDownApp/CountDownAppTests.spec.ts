@@ -4,7 +4,7 @@ import { renderHook, act } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.useFakeTimers();
-
+// testing the useCountDownTimer hook
 describe('useCountDownTimer', () => {
   it('initializes with the given seconds', () => {
     const { result } = renderHook(() => useCountDownTimer(10));
