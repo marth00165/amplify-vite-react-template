@@ -1,8 +1,71 @@
 import React, { useState } from 'react';
+import styled from 'styled-components';
 import {
   useCountDownTimer,
   UseCountDownTimerReturn,
 } from './useCountDownTimer';
+
+const Container = styled.div`
+  max-width: 320px;
+  margin: 2rem auto;
+  text-align: center;
+  background: #fffbe7;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  padding: 2rem 1rem;
+`;
+
+const TimerDisplay = styled.div`
+  font-size: 2.5rem;
+  margin: 1rem 0;
+  color: #ff4e50;
+`;
+
+const InputRow = styled.div`
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const Input = styled.input`
+  width: 80px;
+  font-size: 1.2rem;
+  text-align: center;
+  padding: 0.4rem;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+`;
+
+const Button = styled.button`
+  margin-left: 8px;
+  background: #ff4e50;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1.2rem;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.15s;
+  &:disabled {
+    background: #ffd1d1;
+    color: #fff;
+    cursor: not-allowed;
+  }
+`;
+
+const ButtonRow = styled.div`
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+`;
+
+const CompleteMsg = styled.div`
+  color: #ff4e50;
+  margin-top: 12px;
+  font-weight: bold;
+`;
 
 export function Timer() {
   const [input, setInput] = useState<string>('60');
@@ -19,7 +82,7 @@ export function Timer() {
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInput(e.target.value.replace(/^0+/, '') || ''); // Remove leading zeros
+    setInput(e.target.value.replace(/^0+/, '') || '');
   };
 
   const handleSet = () => {
@@ -28,34 +91,30 @@ export function Timer() {
   };
 
   return (
-    <div style={{ maxWidth: 320, margin: '2rem auto', textAlign: 'center' }}>
+    <Container>
       <h2>Countdown Timer</h2>
-      <div style={{ fontSize: '2.5rem', margin: '1rem 0' }}>{seconds}s</div>
-      <div style={{ marginBottom: '1rem' }}>
-        <input
+      <TimerDisplay>{seconds}s</TimerDisplay>
+      <InputRow>
+        <Input
           type='number'
           min={0}
           value={input}
           onChange={handleInputChange}
-          style={{ width: 80, fontSize: '1.2rem', textAlign: 'center' }}
+          placeholder='Seconds'
         />
-        <button onClick={handleSet} style={{ marginLeft: 8 }}>
-          Set
-        </button>
-      </div>
-      <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-        <button onClick={play} disabled={isRunning || seconds <= 0}>
+        <Button onClick={handleSet}>Set</Button>
+      </InputRow>
+      <ButtonRow>
+        <Button onClick={play} disabled={isRunning || seconds <= 0}>
           Start
-        </button>
-        <button onClick={pause} disabled={!isRunning}>
+        </Button>
+        <Button onClick={pause} disabled={!isRunning}>
           Pause
-        </button>
-        <button onClick={() => reset(Number(input) || 0)}>Reset</button>
-      </div>
-      {isComplete && (
-        <div style={{ color: 'red', marginTop: 12 }}>Time's up!</div>
-      )}
-    </div>
+        </Button>
+        <Button onClick={() => reset(Number(input) || 0)}>Reset</Button>
+      </ButtonRow>
+      {isComplete && <CompleteMsg>Time's up!</CompleteMsg>}
+    </Container>
   );
 }
 
