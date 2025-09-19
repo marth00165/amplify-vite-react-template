@@ -12,13 +12,12 @@ import ProtectedRoute from './routes/protectedRoute';
 import Landing from './pages/Landing';
 import StateManagementPractice from './pages/StateManagementPractice';
 import ApiConcepts from './pages/ApiConcepts';
-import Timer from './pages/countDownApp/Timer';
+import MultiTimerApp from './pages/countDownApp/MultiTimerApp';
 
 export default function App() {
   return (
     <UserProvider>
       <Router>
-        <Navbar />
         <Routes>
           {/* Public routes */}
           <Route path='/landing' element={<Landing />} />
@@ -28,9 +27,17 @@ export default function App() {
             element={<StateManagementPractice />}
           />
           <Route path='/apiConcepts' element={<ApiConcepts />} />
-          <Route path='/timer' element={<Timer />} />
-          {/* Protected routes */}
-          <Route element={<ProtectedRoute />}>
+          <Route path='/timer' element={<MultiTimerApp />} />
+
+          {/* Protected routes with Navbar */}
+          <Route
+            element={
+              <>
+                <Navbar />
+                <ProtectedRoute />
+              </>
+            }
+          >
             <Route path='/' element={<Dashboard />} />
             <Route path='/profile' element={<ProfilePage />} />
           </Route>
