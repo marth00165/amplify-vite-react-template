@@ -21,7 +21,7 @@ export default function App() {
       <Router>
         <Routes>
           {/* Public routes */}
-          <Route path='/landing' element={<Landing />} />
+          <Route path='/' element={<Landing />} />
           <Route path='/signin' element={<SignInPage />} />
           <Route
             path='/stateManagement'
@@ -40,7 +40,7 @@ export default function App() {
               </>
             }
           >
-            <Route path='/' element={<Dashboard />} />
+            <Route path='/dashboard' element={<Dashboard />} />
             <Route path='/profile' element={<ProfilePage />} />
           </Route>
 
