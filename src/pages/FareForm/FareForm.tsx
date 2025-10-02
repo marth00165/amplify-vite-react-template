@@ -16,7 +16,6 @@ const Form = styled.form`
   border-radius: 18px;
   box-shadow: 0 8px 32px rgba(60, 60, 90, 0.12);
   overflow: hidden;
-  margin: 1.5rem;
 
   @media (max-width: 768px) {
     max-width: none;
@@ -217,6 +216,7 @@ interface Zone {
 interface FaresJson {
   zones: Zone[];
   info: { [key: string]: string };
+  title?: string;
 }
 
 interface FareResult {
@@ -225,7 +225,9 @@ interface FareResult {
   message: string;
 }
 
-export interface FareFormProps {}
+export interface FareFormProps {
+  customFares?: FaresJson;
+}
 
 /*
 This component handles user input for fare calculation.
@@ -233,8 +235,10 @@ It is a dumb component that relies on the useFares hook for data fetching
 and the calcFare utility for fare calculation logic.
 */
 
-export default function FareForm() {
-  const { data: faresJson, loading, error } = useFares();
+export default function FareForm({ customFares }: FareFormProps) {
+  const { data: defaultFares, loading, error } = useFares();
+
+  const faresJson = customFares || defaultFares;
 
   const [zone, setZone] = useState<string>('1');
   const [type, setType] = useState<FareType>('weekday');
@@ -295,7 +299,7 @@ export default function FareForm() {
     <Form onSubmit={(e) => e.preventDefault()}>
       <Header>
         <img src='/img/septa-logo.webp' alt='SEPTA' />
-        Regional Rail Fares
+        {customFares?.title || 'Regional Rail Fares'}
       </Header>
 
       <Group>
