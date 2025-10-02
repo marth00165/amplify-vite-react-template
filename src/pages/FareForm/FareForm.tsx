@@ -217,6 +217,7 @@ interface FaresJson {
   zones: Zone[];
   info: { [key: string]: string };
   title?: string;
+  logoUrl?: string;
 }
 
 interface FareResult {
@@ -298,7 +299,18 @@ export default function FareForm({ customFares }: FareFormProps) {
   return (
     <Form onSubmit={(e) => e.preventDefault()}>
       <Header>
-        <img src='/img/septa-logo.webp' alt='SEPTA' />
+        {customFares?.logoUrl ? (
+          <img
+            src={customFares.logoUrl}
+            alt='Transportation logo'
+            onError={(e) => {
+              // Fallback to default logo if custom URL fails to load
+              (e.target as HTMLImageElement).src = '/img/septa-logo.webp';
+            }}
+          />
+        ) : (
+          <img src='/img/septa-logo.webp' alt='SEPTA' />
+        )}
         {customFares?.title || 'Regional Rail Fares'}
       </Header>
 

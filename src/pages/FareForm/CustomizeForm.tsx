@@ -176,6 +176,26 @@ const DeleteButton = styled.button`
   }
 `;
 
+const LogoPreview = styled.div`
+  width: 100%;
+  height: 60px;
+  border: 1px solid #e6e6e6;
+  border-radius: 6px;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  background: #f7fafd;
+
+  img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+`;
+
 interface Zone {
   name: string;
   zone: number;
@@ -199,6 +219,7 @@ const fareTypes = [
 
 export function CustomizeForm({ onSave }: CustomizeFormProps) {
   const [title, setTitle] = useState('Regional Rail Fares');
+  const [logoUrl, setLogoUrl] = useState<string>('');
   const [zones, setZones] = useState<Zone[]>([
     {
       name: 'CCP/1',
@@ -323,6 +344,7 @@ export function CustomizeForm({ onSave }: CustomizeFormProps) {
     e.preventDefault();
     const customFares = {
       title,
+      logoUrl: logoUrl || undefined, // Only include if provided
       info: {
         weekday: 'Valid Monday through Friday, 4:00 a.m. - 7:00 p.m.',
         evening_weekend:
@@ -341,6 +363,21 @@ export function CustomizeForm({ onSave }: CustomizeFormProps) {
     onSave(customFares);
   };
 
+  // Preview the logo
+  const logoPreview = logoUrl ? (
+    <img
+      src={logoUrl}
+      alt='Logo preview'
+      onError={(e) => {
+        // Handle image loading errors
+        (e.target as HTMLImageElement).src =
+          'https://via.placeholder.com/150x50?text=Invalid+URL';
+      }}
+    />
+  ) : (
+    <span>Logo preview will appear here</span>
+  );
+
   return (
     <Form onSubmit={handleSubmit}>
       <Header>Customize Fare Structure</Header>
@@ -354,6 +391,16 @@ export function CustomizeForm({ onSave }: CustomizeFormProps) {
             onChange={(e) => setTitle(e.target.value)}
             placeholder='Enter title'
           />
+
+          <Label htmlFor='logoUrl'>Logo URL</Label>
+          <Input
+            id='logoUrl'
+            type='url'
+            value={logoUrl}
+            onChange={(e) => setLogoUrl(e.target.value)}
+            placeholder='https://example.com/logo.png'
+          />
+          <LogoPreview>{logoPreview}</LogoPreview>
         </Group>
 
         {zones.map((zone, zoneIndex) => (
