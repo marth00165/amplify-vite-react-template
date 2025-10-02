@@ -18,13 +18,16 @@
 body {
   margin: 0;
   background: var(--gradient);
-  display: flex;
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  height: 100vh;
-  width: 100vw;
-  justify-content: center;
-  align-items: center;
+  min-height: 100vh;
+  width: 100%;
   color: var(--air-superiority-blue);
+  overflow-x: hidden;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
 }
 
 main {
