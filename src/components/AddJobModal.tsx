@@ -21,14 +21,14 @@ const ModalBackdrop = styled.div`
 `;
 
 const ModalContent = styled.div`
-  background: ${props => props.theme.colors.white};
-  padding: ${props => props.theme.spacing.xl};
-  border-radius: ${props => props.theme.borderRadius.xl};
+  background: ${(props) => props.theme.colors.white};
+  padding: ${(props) => props.theme.spacing.xl};
+  border-radius: ${(props) => props.theme.borderRadius.xl};
   width: 500px;
   max-width: 90%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: ${props => props.theme.shadows.xl};
+  box-shadow: ${(props) => props.theme.shadows.xl};
 `;
 
 const ModalHeader = styled.div`
@@ -37,11 +37,11 @@ const ModalHeader = styled.div`
   align-items: center;
   margin-bottom: 2rem;
   padding-bottom: 1rem;
-  border-bottom: 2px solid ${props => props.theme.colors.border};
+  border-bottom: 2px solid ${(props) => props.theme.colors.border};
 `;
 
 const ModalTitle = styled.h2`
-  color: ${props => props.theme.colors.text};
+  color: ${(props) => props.theme.colors.text};
   margin: 0;
   font-size: 1.5rem;
   font-weight: 600;
@@ -51,7 +51,7 @@ const CloseButton = styled.button`
   background: none;
   border: none;
   font-size: 2rem;
-  color: ${props => props.theme.colors.textSecondary};
+  color: ${(props) => props.theme.colors.textSecondary};
   cursor: pointer;
   padding: 0;
   width: 40px;
@@ -63,8 +63,8 @@ const CloseButton = styled.button`
   transition: all 0.2s;
 
   &:hover {
-    background: ${props => props.theme.colors.border};
-    color: ${props => props.theme.colors.text};
+    background: ${(props) => props.theme.colors.border};
+    color: ${(props) => props.theme.colors.text};
   }
 `;
 
@@ -81,32 +81,32 @@ const FormGroup = styled.div`
 `;
 
 const Label = styled.label`
-  color: ${props => props.theme.colors.text};
+  color: ${(props) => props.theme.colors.text};
   font-weight: 600;
   font-size: 0.9rem;
 `;
 
 const Input = styled.input`
   padding: 0.75rem;
-  border: 2px solid ${props => props.theme.colors.border};
+  border: 2px solid ${(props) => props.theme.colors.border};
   border-radius: 6px;
   font-size: 1rem;
   transition: all 0.2s;
 
   &:focus {
     outline: none;
-    border-color: ${props => props.theme.colors.primary};
-    box-shadow: 0 0 0 3px ${props => props.theme.colors.primaryLight}40;
+    border-color: ${(props) => props.theme.colors.primary};
+    box-shadow: 0 0 0 3px ${(props) => props.theme.colors.primaryLight}40;
   }
 
   &::placeholder {
-    color: ${props => props.theme.colors.textSecondary};
+    color: ${(props) => props.theme.colors.textSecondary};
   }
 `;
 
 const TextArea = styled.textarea`
   padding: 0.75rem;
-  border: 2px solid ${props => props.theme.colors.border};
+  border: 2px solid ${(props) => props.theme.colors.border};
   border-radius: 6px;
   font-size: 1rem;
   min-height: 100px;
@@ -116,27 +116,27 @@ const TextArea = styled.textarea`
 
   &:focus {
     outline: none;
-    border-color: ${props => props.theme.colors.primary};
-    box-shadow: 0 0 0 3px ${props => props.theme.colors.primaryLight}40;
+    border-color: ${(props) => props.theme.colors.primary};
+    box-shadow: 0 0 0 3px ${(props) => props.theme.colors.primaryLight}40;
   }
 
   &::placeholder {
-    color: ${props => props.theme.colors.textSecondary};
+    color: ${(props) => props.theme.colors.textSecondary};
   }
 `;
 
 const Select = styled.select`
   padding: 0.75rem;
-  border: 2px solid ${props => props.theme.colors.border};
+  border: 2px solid ${(props) => props.theme.colors.border};
   border-radius: 6px;
   font-size: 1rem;
-  background: ${props => props.theme.colors.white};
+  background: ${(props) => props.theme.colors.white};
   transition: all 0.2s;
 
   &:focus {
     outline: none;
-    border-color: ${props => props.theme.colors.primary};
-    box-shadow: 0 0 0 3px ${props => props.theme.colors.primaryLight}40;
+    border-color: ${(props) => props.theme.colors.primary};
+    box-shadow: 0 0 0 3px ${(props) => props.theme.colors.primaryLight}40;
   }
 `;
 
@@ -169,33 +169,33 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
   ${(props) =>
     props.variant === 'primary'
       ? `
-    background: ${props => props.theme.colors.primary};
-    color: ${props => props.theme.colors.white};
+    background: ${(props: any) => props.theme.colors.primary};
+    color: ${(props: any) => props.theme.colors.white};
 
     &:hover:not(:disabled) {
-      background: ${props => props.theme.colors.primaryDark};
+      background: ${(props: any) => props.theme.colors.primaryDark};
       transform: translateY(-1px);
     }
 
     &:disabled {
-      background: ${props => props.theme.colors.textSecondary};
+      background: ${(props: any) => props.theme.colors.textSecondary};
       cursor: not-allowed;
     }
   `
       : `
-    background: ${props => props.theme.colors.border};
-    color: ${props => props.theme.colors.text};
+    background: ${(props: any) => props.theme.colors.border};
+    color: ${(props: any) => props.theme.colors.text};
 
     &:hover {
-      background: ${props => props.theme.colors.textSecondary};
-      color: ${props => props.theme.colors.white};
+      background: ${(props: any) => props.theme.colors.textSecondary};
+      color: ${(props: any) => props.theme.colors.white};
     }
   `}
 `;
 
 const ErrorMessage = styled.div`
-  background: ${props => props.theme.colors.error};
-  color: ${props => props.theme.colors.white};
+  background: ${(props) => props.theme.colors.error};
+  color: ${(props) => props.theme.colors.white};
   padding: 0.75rem;
   border-radius: 6px;
   margin-bottom: 1rem;
@@ -203,7 +203,7 @@ const ErrorMessage = styled.div`
 `;
 
 const RequiredIndicator = styled.span`
-  color: ${props => props.theme.colors.error};
+  color: ${(props) => props.theme.colors.error};
   margin-left: 2px;
 `;
 

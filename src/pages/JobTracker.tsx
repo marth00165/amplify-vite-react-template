@@ -2,11 +2,23 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  useDroppable,
+  useDraggable,
+} from '@dnd-kit/core';
+import {
   getJobs,
   type Job,
   JOB_STATUSES,
   getJobStatusLabel,
   getJobStatusColor,
+  updateJob,
 } from '../api/jobs';
 import { getOrCreateUser } from '../api/user';
 import AddJobModal from '../components/AddJobModal';
@@ -28,14 +40,14 @@ const Header = styled.div`
 `;
 
 const Title = styled.h1`
-  color: ${props => props.theme.colors.primary};
+  color: ${(props) => props.theme.colors.primary};
   margin: 0;
   font-size: 2.5rem;
   font-weight: 600;
 `;
 
 const AddJobButton = styled.button`
-  background: ${props => props.theme.colors.primary};
+  background: ${(props) => props.theme.colors.primary};
   color: white;
   border: none;
   padding: 12px 24px;
@@ -46,7 +58,7 @@ const AddJobButton = styled.button`
   transition: all 0.2s;
 
   &:hover {
-    background: ${props => props.theme.colors.primaryDark};
+    background: ${(props) => props.theme.colors.primaryDark};
     transform: translateY(-1px);
   }
 `;
@@ -63,7 +75,7 @@ const KanbanBoard = styled.div`
 `;
 
 const Column = styled.div`
-  background: ${props => props.theme.colors.surface};
+  background: ${(props) => props.theme.colors.surface};
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -79,15 +91,15 @@ const ColumnHeader = styled.div<{ statusColor: string }>`
 `;
 
 const ColumnTitle = styled.h3`
-  color: ${props => props.theme.colors.text};
+  color: ${(props) => props.theme.colors.text};
   margin: 0;
   font-size: 1.2rem;
   font-weight: 600;
 `;
 
 const JobCount = styled.span`
-  background: ${props => props.theme.colors.primaryLight};
-  color: ${props => props.theme.colors.primary};
+  background: ${(props) => props.theme.colors.primaryLight};
+  color: ${(props) => props.theme.colors.primary};
   padding: 4px 8px;
   border-radius: 12px;
   font-size: 0.8rem;
@@ -95,32 +107,35 @@ const JobCount = styled.span`
   margin-left: auto;
 `;
 
-const JobCard = styled.div`
-  background: ${props => props.theme.colors.white};
+const JobCard = styled.div<{ isDragging?: boolean }>`
+  background: ${(props) => props.theme.colors.white};
   border-radius: 8px;
   padding: 16px;
   margin-bottom: 12px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
+  cursor: ${(props) => (props.isDragging ? 'grabbing' : 'grab')};
   transition: all 0.2s;
   border-left: 4px solid transparent;
+  opacity: ${(props) => (props.isDragging ? 0.6 : 1)};
+  transform: ${(props) => (props.isDragging ? 'rotate(5deg)' : 'none')};
 
   &:hover {
-    transform: translateY(-1px);
+    transform: ${(props) =>
+      props.isDragging ? 'rotate(5deg)' : 'translateY(-1px)'};
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    border-left-color: ${props => props.theme.colors.primary};
+    border-left-color: ${(props) => props.theme.colors.primary};
   }
 `;
 
 const JobTitle = styled.h4`
-  color: ${props => props.theme.colors.text};
+  color: ${(props) => props.theme.colors.text};
   margin: 0 0 8px 0;
   font-size: 1.1rem;
   font-weight: 600;
 `;
 
 const JobCompany = styled.p`
-  color: ${props => props.theme.colors.primary};
+  color: ${(props) => props.theme.colors.primary};
   margin: 0 0 8px 0;
   font-weight: 500;
 `;
@@ -130,7 +145,7 @@ const JobDetails = styled.div`
   flex-direction: column;
   gap: 4px;
   font-size: 0.9rem;
-  color: ${props => props.theme.colors.textSecondary};
+  color: ${(props) => props.theme.colors.textSecondary};
 `;
 
 const JobLocation = styled.span`
@@ -165,17 +180,102 @@ const JobDate = styled.span`
 
 const EmptyState = styled.div`
   text-align: center;
-  color: ${props => props.theme.colors.textSecondary};
+  color: ${(props) => props.theme.colors.textSecondary};
   font-style: italic;
   margin-top: 20px;
 `;
 
 const LoadingState = styled.div`
   text-align: center;
-  color: ${props => props.theme.colors.textSecondary};
+  color: ${(props) => props.theme.colors.textSecondary};
   font-size: 1.1rem;
   margin: 40px 0;
 `;
+
+const DropZone = styled.div<{ isOver: boolean }>`
+  min-height: 400px;
+  transition: all 0.2s;
+  ${(props) =>
+    props.isOver &&
+    `
+    background: ${props.theme.colors.primaryLight}20;
+    border: 2px dashed ${props.theme.colors.primary};
+    border-radius: ${props.theme.borderRadius.lg};
+  `}
+`;
+
+// DroppableColumn component
+interface DroppableColumnProps {
+  id: string;
+  status: string;
+  jobCount: number;
+  children: React.ReactNode;
+}
+
+const DroppableColumn: React.FC<DroppableColumnProps> = ({
+  id,
+  status,
+  jobCount,
+  children,
+}) => {
+  const { isOver, setNodeRef } = useDroppable({
+    id,
+  });
+
+  const statusColor = getJobStatusColor(status as any);
+
+  return (
+    <Column>
+      <ColumnHeader statusColor={statusColor}>
+        <ColumnTitle>{getJobStatusLabel(status as any)}</ColumnTitle>
+        <JobCount>{jobCount}</JobCount>
+      </ColumnHeader>
+      <DropZone ref={setNodeRef} isOver={isOver}>
+        {children}
+      </DropZone>
+    </Column>
+  );
+};
+
+// DraggableJobCard component
+interface DraggableJobCardProps {
+  job: Job;
+  onClick: () => void;
+}
+
+const DraggableJobCard: React.FC<DraggableJobCardProps> = ({
+  job,
+  onClick,
+}) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({
+      id: job.id,
+    });
+
+  const style = transform
+    ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+      }
+    : undefined;
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+      <JobCard isDragging={isDragging} onClick={onClick}>
+        <JobTitle>{job.title}</JobTitle>
+        <JobCompany>{job.company}</JobCompany>
+        <JobDetails>
+          {job.location && <JobLocation>{job.location}</JobLocation>}
+          {job.salary && <JobSalary>{job.salary}</JobSalary>}
+          <JobDate>Applied {formatDate(job.appliedDate)}</JobDate>
+        </JobDetails>
+      </JobCard>
+    </div>
+  );
+};
 
 const JobTracker: React.FC = () => {
   const { user } = useAuthenticator((context) => [context.user]);
@@ -185,6 +285,12 @@ const JobTracker: React.FC = () => {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [showJobDetails, setShowJobDetails] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor)
+  );
 
   useEffect(() => {
     loadJobs();
@@ -237,8 +343,36 @@ const JobTracker: React.FC = () => {
     loadJobs(); // Refresh the jobs list
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over) return;
+
+    const jobId = active.id as string;
+    const newStatus = over.id as string;
+
+    // Find the job being dragged
+    const job = jobs.find((j) => j.id === jobId);
+    if (!job || job.status === newStatus) return;
+
+    try {
+      // Optimistically update the UI
+      setJobs((prevJobs) =>
+        prevJobs.map((j) =>
+          j.id === jobId ? { ...j, status: newStatus as any } : j
+        )
+      );
+
+      // Update the job status in the backend
+      await updateJob(jobId, { status: newStatus as any });
+
+      // Refresh jobs to get the latest data
+      await loadJobs();
+    } catch (error) {
+      console.error('Error updating job status:', error);
+      // Revert the optimistic update on error
+      await loadJobs();
+    }
   };
 
   if (loading) {
@@ -256,39 +390,38 @@ const JobTracker: React.FC = () => {
         <AddJobButton onClick={handleAddJob}>Add Job</AddJobButton>
       </Header>
 
-      <KanbanBoard>
-        {JOB_STATUSES.map((status) => {
-          const statusJobs = getJobsByStatusGroup(status);
-          const statusColor = getJobStatusColor(status);
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <KanbanBoard>
+          {JOB_STATUSES.map((status) => {
+            const statusJobs = getJobsByStatusGroup(status);
 
-          return (
-            <Column key={status}>
-              <ColumnHeader statusColor={statusColor}>
-                <ColumnTitle>{getJobStatusLabel(status)}</ColumnTitle>
-                <JobCount>{statusJobs.length}</JobCount>
-              </ColumnHeader>
-
-              {statusJobs.length > 0 ? (
-                statusJobs.map((job) => (
-                  <JobCard key={job.id} onClick={() => handleJobClick(job)}>
-                    <JobTitle>{job.title}</JobTitle>
-                    <JobCompany>{job.company}</JobCompany>
-                    <JobDetails>
-                      {job.location && (
-                        <JobLocation>{job.location}</JobLocation>
-                      )}
-                      {job.salary && <JobSalary>{job.salary}</JobSalary>}
-                      <JobDate>Applied {formatDate(job.appliedDate)}</JobDate>
-                    </JobDetails>
-                  </JobCard>
-                ))
-              ) : (
-                <EmptyState>No jobs in this status</EmptyState>
-              )}
-            </Column>
-          );
-        })}
-      </KanbanBoard>
+            return (
+              <DroppableColumn
+                key={status}
+                id={status}
+                status={status}
+                jobCount={statusJobs.length}
+              >
+                {statusJobs.length > 0 ? (
+                  statusJobs.map((job) => (
+                    <DraggableJobCard
+                      key={job.id}
+                      job={job}
+                      onClick={() => handleJobClick(job)}
+                    />
+                  ))
+                ) : (
+                  <EmptyState>No jobs in this status</EmptyState>
+                )}
+              </DroppableColumn>
+            );
+          })}
+        </KanbanBoard>
+      </DndContext>
 
       {/* Add Job Modal */}
       {showAddModal && currentUserId && (
