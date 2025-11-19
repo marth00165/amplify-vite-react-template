@@ -121,11 +121,12 @@ export default function Landing() {
       color: '#3a7ca5',
     },
     {
-      path: '/stateManagement',
-      title: 'State Management',
-      description: 'Practice examples using React state management techniques.',
-      icon: '🔄',
-      color: '#7c9eb2',
+      path: '/jobs',
+      title: 'Job Tracker',
+      description:
+        'Track your job applications with a Kanban-style board and drag & drop functionality.',
+      icon: '�',
+      color: '#2563eb',
     },
     {
       path: '/apiConcepts',
