@@ -27,7 +27,7 @@ import JobDetailsModal from '../components/JobDetailsModal';
 // Using theme from styled-components ThemeProvider
 
 const PageContainer = styled.div`
-  padding: 20px;
+  padding: 100px 20px 20px 20px; /* Added top padding to account for fixed navbar */
   max-width: 1400px;
   margin: 0 auto;
 `;
