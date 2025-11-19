@@ -365,12 +365,9 @@ const JobTracker: React.FC = () => {
 
       // Update the job status in the backend
       await updateJob(jobId, { status: newStatus as any });
-
-      // Refresh jobs to get the latest data
-      await loadJobs();
     } catch (error) {
       console.error('Error updating job status:', error);
-      // Revert the optimistic update on error
+      // Revert the optimistic update on error by reloading jobs
       await loadJobs();
     }
   };

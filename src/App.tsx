@@ -31,7 +31,6 @@ export default function App() {
           <Route path='/apiConcepts' element={<ApiConcepts />} />
           <Route path='/timer' element={<MultiTimerApp />} />
           <Route path='/ticketPriceGenerator' element={<FareForm />} />
-          <Route path='/jobs' element={<JobTracker />} />
 
           {/* Protected routes with Navbar */}
           <Route
@@ -44,6 +43,7 @@ export default function App() {
           >
             <Route path='/dashboard' element={<Dashboard />} />
             <Route path='/profile' element={<ProfilePage />} />
+            <Route path='/jobs' element={<JobTracker />} />
           </Route>
 
           {/* Optional catch-all */}
