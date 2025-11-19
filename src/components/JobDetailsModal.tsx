@@ -140,27 +140,6 @@ const InfoLink = styled.a`
   }
 `;
 
-const Description = styled.div`
-  background: ${(props) => props.theme.colors.surface};
-  padding: ${(props) => props.theme.spacing.lg};
-  border-radius: ${(props) => props.theme.borderRadius.lg};
-  margin-bottom: ${(props) => props.theme.spacing.xl};
-`;
-
-const DescriptionLabel = styled.h4`
-  color: ${(props) => props.theme.colors.text};
-  margin: 0 0 ${(props) => props.theme.spacing.md} 0;
-  font-size: ${(props) => props.theme.typography.fontSizes.lg};
-  font-weight: ${(props) => props.theme.typography.fontWeights.semibold};
-`;
-
-const DescriptionText = styled.p`
-  color: ${(props) => props.theme.colors.text};
-  margin: 0;
-  line-height: ${(props) => props.theme.typography.lineHeights.relaxed};
-  white-space: pre-wrap;
-`;
-
 const ActionButtons = styled.div`
   display: flex;
   gap: ${(props) => props.theme.spacing.md};
@@ -226,6 +205,18 @@ const Button = styled.button<{
   }
 `;
 
+const ActionButton = styled(Button)``;
+
+const SecondaryButton = styled(Button)`
+  background: ${(props) => props.theme.colors.border};
+  color: ${(props) => props.theme.colors.text};
+
+  &:hover:not(:disabled) {
+    background: ${(props) => props.theme.colors.textSecondary};
+    color: ${(props) => props.theme.colors.white};
+  }
+`;
+
 const CommentsSection = styled.div`
   border-top: 2px solid ${(props) => props.theme.colors.border};
   margin-top: ${(props) => props.theme.spacing.xl};
@@ -276,6 +267,65 @@ const CommentItem = styled.div`
   border-left: 4px solid ${(props) => props.theme.colors.primary};
 `;
 
+const FormField = styled.div`
+  margin-bottom: ${(props) => props.theme.spacing.md};
+`;
+
+const FormLabel = styled.label`
+  display: block;
+  font-weight: 600;
+  color: ${(props) => props.theme.colors.text};
+  margin-bottom: ${(props) => props.theme.spacing.sm};
+`;
+
+const FormInput = styled.input`
+  width: 100%;
+  padding: ${(props) => props.theme.spacing.sm};
+  border: 2px solid ${(props) => props.theme.colors.border};
+  border-radius: ${(props) => props.theme.borderRadius.md};
+  font-size: 16px;
+  font-family: inherit;
+  transition: all 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: ${(props) => props.theme.colors.primary};
+    box-shadow: 0 0 0 3px ${(props) => props.theme.colors.primaryLight}40;
+  }
+
+  &::placeholder {
+    color: ${(props) => props.theme.colors.textSecondary};
+  }
+`;
+
+const FormTextarea = styled.textarea`
+  width: 100%;
+  padding: ${(props) => props.theme.spacing.sm};
+  border: 2px solid ${(props) => props.theme.colors.border};
+  border-radius: ${(props) => props.theme.borderRadius.md};
+  font-size: 16px;
+  font-family: inherit;
+  min-height: 100px;
+  resize: vertical;
+  transition: all 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: ${(props) => props.theme.colors.primary};
+    box-shadow: 0 0 0 3px ${(props) => props.theme.colors.primaryLight}40;
+  }
+
+  &::placeholder {
+    color: ${(props) => props.theme.colors.textSecondary};
+  }
+`;
+
+const EditModeActions = styled.div`
+  display: flex;
+  gap: ${(props) => props.theme.spacing.sm};
+  margin-bottom: ${(props) => props.theme.spacing.lg};
+`;
+
 const CommentMeta = styled.div`
   display: flex;
   justify-content: flex-start;
@@ -320,6 +370,7 @@ interface JobDetailsModalProps {
   onJobUpdated: (updatedJob: Job) => void;
   onJobDeleted: () => void;
   userId: string;
+  isEditMode?: boolean;
 }
 
 const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
@@ -329,17 +380,37 @@ const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
   onJobUpdated,
   onJobDeleted,
   userId,
+  isEditMode = false,
 }) => {
   const [comments, setComments] = useState<JobComment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(false);
   const [commentsLoading, setCommentsLoading] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    title: '',
+    company: '',
+    description: '',
+    jobUrl: '',
+    salary: '',
+    location: '',
+  });
+  const [isInEditMode, setIsInEditMode] = useState(isEditMode);
 
   useEffect(() => {
     if (job && isOpen) {
       loadComments();
+      // Initialize edit form with current job data
+      setEditFormData({
+        title: job.title || '',
+        company: job.company || '',
+        description: job.description || '',
+        jobUrl: job.jobUrl || '',
+        salary: job.salary || '',
+        location: job.location || '',
+      });
+      setIsInEditMode(isEditMode);
     }
-  }, [job, isOpen]);
+  }, [job, isOpen, isEditMode]);
 
   const loadComments = async () => {
     if (!job) return;
@@ -431,6 +502,57 @@ const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
     }
   };
 
+  const handleSaveEdit = async () => {
+    if (!job) return;
+
+    try {
+      setLoading(true);
+      const updateData: UpdateJobData = {
+        title: editFormData.title,
+        company: editFormData.company,
+        description: editFormData.description,
+        jobUrl: editFormData.jobUrl,
+        salary: editFormData.salary,
+        location: editFormData.location,
+      };
+
+      const result = await updateJob(job.id, updateData);
+
+      if (result) {
+        // Add a comment about the job being updated
+        await addJobComment(job.id, userId, 'Job details updated', 'comment');
+
+        // Create updated job object for optimistic update
+        const updatedJob = { ...job, ...editFormData };
+        onJobUpdated(updatedJob);
+        setIsInEditMode(false);
+      }
+    } catch (error) {
+      console.error('Error updating job:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    if (job) {
+      // Reset form to original job data
+      setEditFormData({
+        title: job.title || '',
+        company: job.company || '',
+        description: job.description || '',
+        jobUrl: job.jobUrl || '',
+        salary: job.salary || '',
+        location: job.location || '',
+      });
+    }
+    setIsInEditMode(false);
+  };
+
+  const handleFormChange = (field: string, value: string) => {
+    setEditFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -466,62 +588,173 @@ const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
         </ModalHeader>
 
         <ModalBody>
-          <InfoGrid>
-            {job.location && (
+          {isInEditMode ? (
+            // Edit Mode Form
+            <>
+              <EditModeActions>
+                <ActionButton onClick={handleSaveEdit} disabled={loading}>
+                  {loading ? 'Saving...' : 'Save Changes'}
+                </ActionButton>
+                <SecondaryButton onClick={handleCancelEdit} disabled={loading}>
+                  Cancel
+                </SecondaryButton>
+              </EditModeActions>
+
+              <FormField>
+                <FormLabel>Job Title *</FormLabel>
+                <FormInput
+                  type='text'
+                  value={editFormData.title}
+                  onChange={(e) => handleFormChange('title', e.target.value)}
+                  placeholder='Enter job title'
+                  required
+                />
+              </FormField>
+
+              <FormField>
+                <FormLabel>Company *</FormLabel>
+                <FormInput
+                  type='text'
+                  value={editFormData.company}
+                  onChange={(e) => handleFormChange('company', e.target.value)}
+                  placeholder='Enter company name'
+                  required
+                />
+              </FormField>
+
+              <FormField>
+                <FormLabel>Description</FormLabel>
+                <FormTextarea
+                  value={editFormData.description}
+                  onChange={(e) =>
+                    handleFormChange('description', e.target.value)
+                  }
+                  placeholder='Enter job description'
+                />
+              </FormField>
+
+              <FormField>
+                <FormLabel>Location</FormLabel>
+                <FormInput
+                  type='text'
+                  value={editFormData.location}
+                  onChange={(e) => handleFormChange('location', e.target.value)}
+                  placeholder='Enter location (e.g., San Francisco, CA)'
+                />
+              </FormField>
+
+              <FormField>
+                <FormLabel>Salary</FormLabel>
+                <FormInput
+                  type='text'
+                  value={editFormData.salary}
+                  onChange={(e) => handleFormChange('salary', e.target.value)}
+                  placeholder='Enter salary range (e.g., $100k-$120k)'
+                />
+              </FormField>
+
+              <FormField>
+                <FormLabel>Job URL</FormLabel>
+                <FormInput
+                  type='url'
+                  value={editFormData.jobUrl}
+                  onChange={(e) => handleFormChange('jobUrl', e.target.value)}
+                  placeholder='Enter job posting URL'
+                />
+              </FormField>
+
               <InfoItem>
-                <InfoLabel>Location</InfoLabel>
-                <InfoValue>📍 {job.location}</InfoValue>
+                <InfoLabel>Status</InfoLabel>
+                <StatusSelect
+                  value={job.status}
+                  onChange={(e) => handleStatusChange(e.target.value)}
+                  disabled={loading}
+                >
+                  {JOB_STATUSES.map((status) => (
+                    <option key={status} value={status}>
+                      {getJobStatusLabel(status)}
+                    </option>
+                  ))}
+                </StatusSelect>
               </InfoItem>
-            )}
-
-            {job.salary && (
-              <InfoItem>
-                <InfoLabel>Salary</InfoLabel>
-                <InfoValue>💰 {job.salary}</InfoValue>
-              </InfoItem>
-            )}
-
-            <InfoItem>
-              <InfoLabel>Applied Date</InfoLabel>
-              <InfoValue>📅 {formatDate(job.appliedDate)}</InfoValue>
-            </InfoItem>
-
-            {job.jobUrl && (
-              <InfoItem>
-                <InfoLabel>Job Posting</InfoLabel>
-                <InfoValue>
-                  <InfoLink
-                    href={job.jobUrl}
-                    target='_blank'
-                    rel='noopener noreferrer'
-                  >
-                    🔗 View Job Posting
-                  </InfoLink>
-                </InfoValue>
-              </InfoItem>
-            )}
-
-            <InfoItem>
-              <InfoLabel>Status</InfoLabel>
-              <StatusSelect
-                value={job.status}
-                onChange={(e) => handleStatusChange(e.target.value)}
-                disabled={loading}
+            </>
+          ) : (
+            // View Mode
+            <>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '20px',
+                }}
               >
-                {JOB_STATUSES.map((status) => (
-                  <option key={status} value={status}>
-                    {getJobStatusLabel(status)}
-                  </option>
-                ))}
-              </StatusSelect>
-            </InfoItem>
-          </InfoGrid>
+                <h3>Job Details</h3>
+                <SecondaryButton onClick={() => setIsInEditMode(true)}>
+                  ✏️ Edit Job
+                </SecondaryButton>
+              </div>
 
-          {job.description && (
-            <Description>
-              <DescriptionLabel>Job Description</DescriptionLabel>
-              <DescriptionText>{job.description}</DescriptionText>
-            </Description>
+              <InfoGrid>
+                {job.location && (
+                  <InfoItem>
+                    <InfoLabel>Location</InfoLabel>
+                    <InfoValue>📍 {job.location}</InfoValue>
+                  </InfoItem>
+                )}
+
+                {job.salary && (
+                  <InfoItem>
+                    <InfoLabel>Salary</InfoLabel>
+                    <InfoValue>💰 {job.salary}</InfoValue>
+                  </InfoItem>
+                )}
+
+                <InfoItem>
+                  <InfoLabel>Applied Date</InfoLabel>
+                  <InfoValue>📅 {formatDate(job.appliedDate)}</InfoValue>
+                </InfoItem>
+
+                {job.jobUrl && (
+                  <InfoItem>
+                    <InfoLabel>Job Posting</InfoLabel>
+                    <InfoValue>
+                      <InfoLink
+                        href={job.jobUrl}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                      >
+                        🔗 View Job Posting
+                      </InfoLink>
+                    </InfoValue>
+                  </InfoItem>
+                )}
+
+                <InfoItem>
+                  <InfoLabel>Status</InfoLabel>
+                  <StatusSelect
+                    value={job.status}
+                    onChange={(e) => handleStatusChange(e.target.value)}
+                    disabled={loading}
+                  >
+                    {JOB_STATUSES.map((status) => (
+                      <option key={status} value={status}>
+                        {getJobStatusLabel(status)}
+                      </option>
+                    ))}
+                  </StatusSelect>
+                </InfoItem>
+
+                {job.description && (
+                  <InfoItem style={{ gridColumn: '1 / -1' }}>
+                    <InfoLabel>Description</InfoLabel>
+                    <InfoValue style={{ whiteSpace: 'pre-wrap' }}>
+                      {job.description}
+                    </InfoValue>
+                  </InfoItem>
+                )}
+              </InfoGrid>
+            </>
           )}
 
           <ActionButtons>

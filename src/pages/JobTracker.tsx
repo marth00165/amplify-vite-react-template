@@ -290,24 +290,34 @@ const DraggableJobCard: React.FC<DraggableJobCardProps> = ({
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
-      <JobCard isDragging={isDragging} onClick={onClick}>
+    <div ref={setNodeRef} style={style}>
+      <JobCard isDragging={isDragging}>
         <JobCardHeader>
-          <JobTitle>{job.title}</JobTitle>
-          <EditButton
-            onClick={onEdit}
-            title='Edit job'
-            {...{ 'data-no-dnd': 'true' }} // Prevent drag when clicking edit button
+          <JobTitle
+            {...listeners}
+            {...attributes}
+            onClick={onClick}
+            style={{ cursor: 'grab' }}
           >
+            {job.title}
+          </JobTitle>
+          <EditButton onClick={onEdit} title='Edit job'>
             ✏️
           </EditButton>
         </JobCardHeader>
-        <JobCompany>{job.company}</JobCompany>
-        <JobDetails>
-          {job.location && <JobLocation>{job.location}</JobLocation>}
-          {job.salary && <JobSalary>{job.salary}</JobSalary>}
-          <JobDate>Applied {formatDate(job.appliedDate)}</JobDate>
-        </JobDetails>
+        <div
+          {...listeners}
+          {...attributes}
+          onClick={onClick}
+          style={{ cursor: 'grab', flex: 1 }}
+        >
+          <JobCompany>{job.company}</JobCompany>
+          <JobDetails>
+            {job.location && <JobLocation>{job.location}</JobLocation>}
+            {job.salary && <JobSalary>{job.salary}</JobSalary>}
+            <JobDate>Applied {formatDate(job.appliedDate)}</JobDate>
+          </JobDetails>
+        </div>
       </JobCard>
     </div>
   );
@@ -320,6 +330,7 @@ const JobTracker: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [showJobDetails, setShowJobDetails] = useState(false);
+  const [isJobModalInEditMode, setIsJobModalInEditMode] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   // Drag and drop sensors
@@ -360,6 +371,7 @@ const JobTracker: React.FC = () => {
 
   const handleJobClick = (job: Job) => {
     setSelectedJob(job);
+    setIsJobModalInEditMode(false);
     setShowJobDetails(true);
   };
 
@@ -370,6 +382,7 @@ const JobTracker: React.FC = () => {
   const handleEditJob = (e: React.MouseEvent, job: Job) => {
     e.stopPropagation(); // Prevent triggering the card click
     setSelectedJob(job);
+    setIsJobModalInEditMode(true);
     setShowJobDetails(true);
   };
 
@@ -494,10 +507,12 @@ const JobTracker: React.FC = () => {
           onClose={() => {
             setShowJobDetails(false);
             setSelectedJob(null);
+            setIsJobModalInEditMode(false);
           }}
           onJobUpdated={handleJobUpdated}
           onJobDeleted={handleJobDeleted}
           userId={currentUserId}
+          isEditMode={isJobModalInEditMode}
         />
       )}
     </PageContainer>
