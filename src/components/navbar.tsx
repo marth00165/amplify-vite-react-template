@@ -20,6 +20,43 @@ const NavbarContainer = styled.nav`
   z-index: 1000;
 `;
 
+const NavContent = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+`;
+
+const NavLinks = styled.div`
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+const NavLink = styled(Link)`
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  transition: all 0.2s;
+
+  &:hover,
+  &:focus {
+    text-decoration: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+  }
+
+  &.active {
+    background: rgba(255, 255, 255, 0.2);
+  }
+`;
+
 const BrandLink = styled(Link)`
   text-decoration: none !important;
   color: white;
@@ -116,9 +153,19 @@ export default function Navbar() {
   return (
     <>
       <NavbarContainer>
-        <BrandLink to='/'>
-          💰 {user ? `${displayName}'s` : ''} Severance Survivor
-        </BrandLink>
+        <NavContent>
+          <BrandLink to='/'>
+            💰 {user ? `${displayName}'s` : ''} Severance Survivor
+          </BrandLink>
+          {user && (
+            <NavLinks>
+              <NavLink to='/dashboard'>Dashboard</NavLink>
+              <NavLink to='/jobs'>Jobs</NavLink>
+              <NavLink to='/timer'>Timer</NavLink>
+              <NavLink to='/ticketPriceGenerator'>Fares</NavLink>
+            </NavLinks>
+          )}
+        </NavContent>
         <Profile>
           {user && (
             <ProfileIcon onClick={() => setIsOpen(!isOpen)}>

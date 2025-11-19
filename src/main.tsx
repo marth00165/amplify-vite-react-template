@@ -8,15 +8,15 @@ import outputs from '../amplify_outputs.json';
 import { Authenticator, ThemeProvider } from '@aws-amplify/ui-react';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import '@aws-amplify/ui-react/styles.css';
-import { theme } from './theme.ts';
+import { amplifyTheme, styledTheme } from './theme.ts';
 
 Amplify.configure(outputs);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={amplifyTheme}>
       <Authenticator.Provider>
-        <StyledThemeProvider theme={theme}>
+        <StyledThemeProvider theme={styledTheme}>
           <App />
         </StyledThemeProvider>
       </Authenticator.Provider>
