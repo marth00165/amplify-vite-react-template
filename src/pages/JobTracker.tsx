@@ -192,6 +192,31 @@ const LoadingState = styled.div`
   margin: 40px 0;
 `;
 
+const JobCardHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+`;
+
+const EditButton = styled.button`
+  background: none;
+  border: none;
+  color: ${(props) => props.theme.colors.textSecondary};
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: all 0.2s;
+  opacity: 0.7;
+
+  &:hover {
+    background: ${(props) => props.theme.colors.border};
+    color: ${(props) => props.theme.colors.primary};
+    opacity: 1;
+  }
+`;
+
 const DropZone = styled.div<{ isOver: boolean }>`
   min-height: 400px;
   transition: all 0.2s;
@@ -241,11 +266,13 @@ const DroppableColumn: React.FC<DroppableColumnProps> = ({
 interface DraggableJobCardProps {
   job: Job;
   onClick: () => void;
+  onEdit: (e: React.MouseEvent) => void;
 }
 
 const DraggableJobCard: React.FC<DraggableJobCardProps> = ({
   job,
   onClick,
+  onEdit,
 }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
@@ -265,7 +292,16 @@ const DraggableJobCard: React.FC<DraggableJobCardProps> = ({
   return (
     <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
       <JobCard isDragging={isDragging} onClick={onClick}>
-        <JobTitle>{job.title}</JobTitle>
+        <JobCardHeader>
+          <JobTitle>{job.title}</JobTitle>
+          <EditButton
+            onClick={onEdit}
+            title='Edit job'
+            {...{ 'data-no-dnd': 'true' }} // Prevent drag when clicking edit button
+          >
+            ✏️
+          </EditButton>
+        </JobCardHeader>
         <JobCompany>{job.company}</JobCompany>
         <JobDetails>
           {job.location && <JobLocation>{job.location}</JobLocation>}
@@ -331,12 +367,31 @@ const JobTracker: React.FC = () => {
     setShowAddModal(true);
   };
 
-  const handleJobAdded = () => {
-    loadJobs(); // Refresh the jobs list
+  const handleEditJob = (e: React.MouseEvent, job: Job) => {
+    e.stopPropagation(); // Prevent triggering the card click
+    setSelectedJob(job);
+    setShowJobDetails(true);
   };
 
-  const handleJobUpdated = () => {
-    loadJobs(); // Refresh the jobs list
+  const handleJobAdded = async (newJob: Job) => {
+    // Optimistic update - add job immediately to UI
+    setJobs((prevJobs) => [...prevJobs, newJob]);
+    setShowAddModal(false);
+
+    // The actual API call is already handled in the AddJobModal
+    // We just need to refresh to get the server-generated data
+    await loadJobs();
+  };
+
+  const handleJobUpdated = async (updatedJob: Job) => {
+    // Optimistic update - update job immediately in UI
+    setJobs((prevJobs) =>
+      prevJobs.map((job) => (job.id === updatedJob.id ? updatedJob : job))
+    );
+    setShowJobDetails(false);
+
+    // Refresh to get the latest server data
+    await loadJobs();
   };
 
   const handleJobDeleted = () => {
@@ -409,6 +464,7 @@ const JobTracker: React.FC = () => {
                       key={job.id}
                       job={job}
                       onClick={() => handleJobClick(job)}
+                      onEdit={(e) => handleEditJob(e, job)}
                     />
                   ))
                 ) : (

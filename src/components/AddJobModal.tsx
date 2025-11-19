@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import {
   createJob,
   type CreateJobData,
+  type Job,
   JOB_STATUSES,
   getJobStatusLabel,
 } from '../api/jobs';
@@ -210,7 +211,7 @@ const RequiredIndicator = styled.span`
 interface AddJobModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onJobAdded: () => void;
+  onJobAdded: (newJob: Job) => void;
   userId: string;
 }
 
@@ -284,7 +285,7 @@ const AddJobModal: React.FC<AddJobModalProps> = ({
           appliedDate: new Date().toISOString().split('T')[0],
         });
 
-        onJobAdded();
+        onJobAdded(result);
         onClose();
       } else {
         setError('Failed to create job. Please try again.');

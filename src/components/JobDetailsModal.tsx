@@ -317,7 +317,7 @@ interface JobDetailsModalProps {
   job: Job | null;
   isOpen: boolean;
   onClose: () => void;
-  onJobUpdated: () => void;
+  onJobUpdated: (updatedJob: Job) => void;
   onJobDeleted: () => void;
   userId: string;
 }
@@ -372,7 +372,9 @@ const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
           'status_change'
         );
 
-        onJobUpdated();
+        // Create updated job object for optimistic update
+        const updatedJob = { ...job, status: newStatus as any };
+        onJobUpdated(updatedJob);
         loadComments();
       }
     } catch (error) {
