@@ -113,6 +113,14 @@ export default function Landing() {
       color: '#52528c',
     },
     {
+      path: '/vendingMachine',
+      title: 'Vending Machine',
+      description:
+        'Interactive vending machine simulator with coin insertion and item selection.',
+      icon: '🏪',
+      color: '#dc2626',
+    },
+    {
       path: '/timer',
       title: 'Multi Timer App',
       description:

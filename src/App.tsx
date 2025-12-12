@@ -15,6 +15,7 @@ import ApiConcepts from './pages/ApiConcepts';
 import MultiTimerApp from './pages/countDownApp/MultiTimerApp';
 import FareForm from './pages/FareForm/Dashboard';
 import JobTracker from './pages/JobTracker';
+import VendingMachine from './pages/VendingMachine';
 
 export default function App() {
   return (
@@ -31,6 +32,7 @@ export default function App() {
           <Route path='/apiConcepts' element={<ApiConcepts />} />
           <Route path='/timer' element={<MultiTimerApp />} />
           <Route path='/ticketPriceGenerator' element={<FareForm />} />
+          <Route path='/vendingMachine' element={<VendingMachine />} />
 
           {/* Protected routes with Navbar */}
           <Route
