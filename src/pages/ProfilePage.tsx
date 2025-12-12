@@ -7,7 +7,7 @@ import { updateUserProfile } from '../api/user';
 const ProfileContainer = styled.div`
   max-width: 800px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 100px 20px 20px 20px;
 `;
 
 const ProfileTitle = styled.h1`
@@ -39,12 +39,25 @@ const ProfileImageContainer = styled.div`
   justify-content: center;
 `;
 
-const ProfileImage = styled.img`
+const ProfileImage = styled.img<{ clickable?: boolean }>`
   width: 150px;
   height: 150px;
   border-radius: 50%;
   object-fit: cover;
+  object-position: center;
   border: 2px solid #444;
+  cursor: ${(props) => (props.clickable ? 'pointer' : 'default')};
+  transition: all 0.2s;
+  display: block;
+
+  &:hover {
+    ${(props) =>
+      props.clickable &&
+      `
+      transform: scale(1.05);
+      border-color: #52528c;
+    `}
+  }
 `;
 
 const ProfileDetails = styled.div`
@@ -130,6 +143,7 @@ const ProfilePage: React.FC = () => {
   const [formData, setFormData] = useState({
     username: '',
     displayName: '',
+    profilePicture: '',
   });
   const [isSaving, setIsSaving] = useState(false);
 
@@ -139,6 +153,7 @@ const ProfilePage: React.FC = () => {
       setFormData({
         username: currentUser.username || '',
         displayName: currentUser.displayName || '',
+        profilePicture: (currentUser as any).profilePicture || '',
       });
     }
   }, [currentUser]);
@@ -184,10 +199,18 @@ const ProfilePage: React.FC = () => {
           <ProfileImageContainer>
             <ProfileImage
               src={
-                (currentUser as any).profilePicture ||
-                'https://via.placeholder.com/150'
+                (isEditing
+                  ? formData.profilePicture
+                  : (currentUser as any).profilePicture) ||
+                'https://via.placeholder.com/150?text=Profile'
               }
               alt='Profile'
+              clickable={!isEditing}
+              onClick={() => !isEditing && setIsEditing(true)}
+              onError={(e) => {
+                (e.target as HTMLImageElement).src =
+                  'https://via.placeholder.com/150?text=Profile';
+              }}
             />
           </ProfileImageContainer>
           <ProfileDetails>
@@ -209,6 +232,16 @@ const ProfilePage: React.FC = () => {
                     name='displayName'
                     value={formData.displayName}
                     onChange={handleChange}
+                  />
+                </EditField>
+                <EditField>
+                  <label>Profile Picture URL:</label>
+                  <input
+                    type='url'
+                    name='profilePicture'
+                    value={formData.profilePicture}
+                    onChange={handleChange}
+                    placeholder='https://example.com/your-image.jpg'
                   />
                 </EditField>
                 <p>
