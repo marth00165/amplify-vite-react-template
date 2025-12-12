@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import styled from 'styled-components';
+import { useUser } from '../context/UserContext';
 
 const PageContainer = styled.div`
   padding: 100px 20px 20px 20px;
@@ -11,7 +12,7 @@ const PageContainer = styled.div`
 `;
 
 const Title = styled.h1`
-  color: ${(props) => props.theme.colors.primary};
+  color: white;
   margin: 0;
   font-size: 2.5rem;
   font-weight: 600;
@@ -179,6 +180,17 @@ const MenuItem = ({
 };
 
 function VendingMachine() {
+  const { currentUser } = useUser();
+
+  const getTitle = () => {
+    if (currentUser?.displayName) {
+      return `${currentUser.displayName}'s Vending Machine`;
+    } else if (currentUser?.username) {
+      return `${currentUser.username}'s Vending Machine`;
+    }
+    return 'Vending Machine App';
+  };
+
   const testdata = {
     items: [
       {
@@ -241,6 +253,10 @@ function VendingMachine() {
     }
     setBalance((prev) => prev - item.price);
     setBoughtItem(item.name);
+
+    setTimeout(() => {
+      setBoughtItem(null);
+    }, 10000);
   };
 
   const renderMenu = () => {
@@ -262,7 +278,7 @@ function VendingMachine() {
 
   return (
     <PageContainer>
-      <Title>Welcome To Wes's Vending Machine</Title>
+      <Title>{getTitle()}</Title>
 
       <BalanceSection>
         <BalanceDisplay>
