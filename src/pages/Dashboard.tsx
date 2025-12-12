@@ -16,7 +16,7 @@ const DashboardLayout = styled.div`
   display: grid;
   grid-template-columns: 1fr 2fr 1fr;
   gap: 2rem;
-  padding: 2rem;
+  padding: 100px 2rem 2rem 2rem; /* Added top padding to account for fixed navbar */
   color: white;
 
   @media (max-width: 1024px) {
