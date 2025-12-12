@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import UserProfileModal from './profile/userProfileModal';
 import ProfileDropdown from './profile/ProfileDropdown';
 import { getWalletBalance } from '../api/transactions';
+import { useUser } from '../context/UserContext';
 
 const NavbarContainer = styled.nav`
   position: fixed;
@@ -89,6 +90,15 @@ const ProfileIcon = styled.button`
   height: 40px;
   font-weight: bold;
   cursor: pointer;
+  overflow: hidden;
+  padding: 0;
+`;
+
+const ProfileImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
 `;
 
 export default function Navbar() {
@@ -98,6 +108,7 @@ export default function Navbar() {
   const [email, setEmail] = useState('');
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const { signOut, user } = useAuthenticator();
+  const { currentUser } = useUser();
 
   // Load user attributes
   const loadUserAttributes = useCallback(async () => {
@@ -169,7 +180,18 @@ export default function Navbar() {
         <Profile>
           {user && (
             <ProfileIcon onClick={() => setIsOpen(!isOpen)}>
-              {profileInitial}
+              {(currentUser as any)?.profilePicture ? (
+                <ProfileImage
+                  src={(currentUser as any).profilePicture}
+                  alt='Profile'
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.parentElement!.textContent = profileInitial;
+                  }}
+                />
+              ) : (
+                profileInitial
+              )}
             </ProfileIcon>
           )}
 
