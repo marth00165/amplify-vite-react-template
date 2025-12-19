@@ -1,0 +1,278 @@
+{
+  "beginner": [
+    {
+      "question": "What is React?",
+      "answer": "React is a declarative, component-based JavaScript library for building interactive UIs.",
+      "bullets": [
+        "Component-based architecture",
+        "State-driven rendering",
+        "Virtual DOM for efficient updates",
+        "Just the view layer, highly flexible"
+      ]
+    },
+    {
+      "question": "What is JSX?",
+      "answer": "JSX is a syntax extension that lets you write HTML-like code directly inside JavaScript.",
+      "bullets": [
+        "Compiles to React.createElement()",
+        "Improves readability and structure",
+        "Optional but widely used"
+      ]
+    },
+    {
+      "question": "What are props?",
+      "answer": "Props are read-only inputs passed from parent to child components.",
+      "bullets": [
+        "Immutable",
+        "Enable one-way data flow",
+        "Trigger re-renders when changed"
+      ]
+    },
+    {
+      "question": "What is state?",
+      "answer": "State is internal component data that can change over time and triggers UI updates.",
+      "bullets": [
+        "Mutable",
+        "Owned by component",
+        "Drives re-renders"
+      ]
+    },
+    {
+      "question": "What is the Virtual DOM?",
+      "answer": "The Virtual DOM is an in-memory representation of the real DOM that React uses to compute efficient updates.",
+      "bullets": [
+        "State changes trigger virtual DOM updates",
+        "React diffs old vs new trees",
+        "Only minimal DOM operations applied"
+      ]
+    },
+    {
+      "question": "How do you create a component in React?",
+      "answer": "By defining a function or class that returns JSX.",
+      "bullets": [
+        "Function components preferred",
+        "Hooks enable state and effects"
+      ]
+    },
+    {
+      "question": "What is the difference between functional vs class components?",
+      "answer": "Functional components are plain functions that use hooks; class components use lifecycle methods and `this`.",
+      "bullets": [
+        "Hooks are simpler and more composable",
+        "Functional components avoid `this` binding"
+      ]
+    }
+  ],
+
+  "intermediate": [
+    {
+      "question": "How does reconciliation work in React?",
+      "answer": "React compares two virtual DOM trees and applies the minimal set of changes to the real DOM.",
+      "bullets": [
+        "Shallow diffing",
+        "Replace subtree if element type changes",
+        "Keys help track identity in lists"
+      ]
+    },
+    {
+      "question": "Why is direct DOM manipulation discouraged?",
+      "answer": "React manages the DOM through its reconciliation process, so manual edits can break consistency.",
+      "bullets": [
+        "DOM updates are slow",
+        "Imperative updates should use refs inside useEffect",
+        "React expects to own the DOM"
+      ]
+    },
+    {
+      "question": "What is useEffect?",
+      "answer": "useEffect runs side effects after render and optionally cleans them up.",
+      "bullets": [
+        "Used for API calls, subscriptions, timers",
+        "Cleanup prevents memory leaks",
+        "Dependency array controls when it runs"
+      ]
+    },
+    {
+      "question": "What is useMemo used for?",
+      "answer": "useMemo memoizes expensive calculations to avoid re-running them unnecessarily.",
+      "bullets": [
+        "Performance optimization",
+        "Only recomputes when dependencies change"
+      ]
+    },
+    {
+      "question": "What is useCallback used for?",
+      "answer": "useCallback memoizes function references to prevent unnecessary child re-renders.",
+      "bullets": [
+        "Useful with React.memo",
+        "Stabilizes function identities"
+      ]
+    },
+    {
+      "question": "How would you optimize a React application that re-renders too often?",
+      "answer": "Use memoization, move state down, avoid inline values, and profile the render tree.",
+      "bullets": [
+        "React.memo",
+        "useCallback/useMemo",
+        "Split large components",
+        "Virtualize long lists",
+        "Avoid heavy work in render"
+      ]
+    },
+    {
+      "question": "What are controlled vs uncontrolled components?",
+      "answer": "Controlled inputs derive their value from React state; uncontrolled use refs.",
+      "bullets": [
+        "Controlled: predictable, easy validation",
+        "Uncontrolled: less state, simpler"
+      ]
+    },
+    {
+      "question": "How does context work?",
+      "answer": "Context allows passing data through the component tree without prop drilling.",
+      "bullets": [
+        "Useful for theme, auth, settings",
+        "Overuse causes excessive re-renders"
+      ]
+    },
+    {
+      "question": "Explain the event system in React.",
+      "answer": "React uses a synthetic event system that wraps native events for consistency.",
+      "bullets": [
+        "Cross-browser normalized",
+        "Events are pooled and batched",
+        "Improves performance"
+      ]
+    }
+  ],
+
+  "advanced": [
+    {
+      "question": "What is React Fiber?",
+      "answer": "React Fiber is the reconciliation engine enabling incremental, interruptible rendering.",
+      "bullets": [
+        "Supports async rendering",
+        "Better scheduling and prioritization",
+        "Improves UI responsiveness"
+      ]
+    },
+    {
+      "question": "Explain how React batching works.",
+      "answer": "React batches multiple state updates into a single render for efficiency.",
+      "bullets": [
+        "setState is asynchronous",
+        "Modern React batches across async boundaries",
+        "Reduces DOM thrashing"
+      ]
+    },
+    {
+      "question": "How do you handle large lists in React?",
+      "answer": "Use virtualization so only visible items render at once.",
+      "bullets": [
+        "react-window",
+        "react-virtualized",
+        "Avoids huge DOM trees"
+      ]
+    },
+    {
+      "question": "Explain hydration in SSR.",
+      "answer": "Hydration attaches React listeners to already-rendered HTML from the server.",
+      "bullets": [
+        "Enables fast first paint",
+        "Client takes over after hydration"
+      ]
+    },
+    {
+      "question": "Explain how React prioritizes updates.",
+      "answer": "React Fiber assigns priority levels and schedules rendering accordingly.",
+      "bullets": [
+        "User input > animations > data updates > background tasks"
+      ]
+    },
+    {
+      "question": "How would you debug a React performance issue?",
+      "answer": "Profile renders, inspect wasted renders, and break down slow components.",
+      "bullets": [
+        "React DevTools Profiler",
+        "Highlight updates",
+        "Check dependency arrays",
+        "Memoize expensive work"
+      ]
+    },
+    {
+      "question": "How does React differ from frameworks like Angular at scale?",
+      "answer": "React favors composition and lightweight primitives; Angular is monolithic and DI-driven.",
+      "bullets": [
+        "React scales via patterns, state mgmt, context, hooks",
+        "Angular has built-in structure, modules, DI"
+      ]
+    },
+    {
+      "question": "Explain how React handles concurrency.",
+      "answer": "React concurrent mode (via Fiber) allows interruptible rendering and better user responsiveness.",
+      "bullets": [
+        "Splits rendering into units of work",
+        "Pauses and resumes rendering",
+        "Prioritizes urgent updates"
+      ]
+    }
+  ],
+
+  "amazon_specific": [
+    {
+      "question": "Explain a time you optimized a React application's performance.",
+      "answer": "Amazon interviewers want measurable impact and deep understanding of rendering behavior.",
+      "bullets": [
+        "Describe the bottleneck",
+        "Explain virtual DOM cost",
+        "Describe memoization or state isolation",
+        "Share metrics (ms reduced, % improvement)"
+      ]
+    },
+    {
+      "question": "How would you design a reusable component system?",
+      "answer": "Amazon expects strong component-driven architecture and separation of concerns.",
+      "bullets": [
+        "Component API design",
+        "Props vs context",
+        "Styling strategy (CSS modules, Tailwind, styled-components)",
+        "Accessibility baked in",
+        "Testing strategy"
+      ]
+    },
+    {
+      "question": "How would you ensure accessibility in a React app?",
+      "answer": "Amazon heavily emphasizes accessibility in consumer-facing products.",
+      "bullets": [
+        "Semantic HTML",
+        "Keyboard navigation",
+        "Correct ARIA usage",
+        "Color contrast compliance",
+        "Screen reader testing"
+      ]
+    },
+    {
+      "question": "How do you prevent unnecessary re-renders in React?",
+      "answer": "Amazon wants deep understanding of rendering pipeline and hooks.",
+      "bullets": [
+        "React.memo",
+        "useCallback/useMemo",
+        "Move state closer to where it’s used",
+        "Avoid derived state",
+        "Key stability"
+      ]
+    },
+    {
+      "question": "How would you architect a large-scale React application?",
+      "answer": "Amazon assesses system-level thinking at the front-end layer.",
+      "bullets": [
+        "Feature-based folder structure",
+        "Shared component libraries",
+        "State management (Redux, RTK, Zustand, context)",
+        "Lazy loading",
+        "Error boundaries",
+        "API abstraction layer"
+      ]
+    }
+  ]
+}

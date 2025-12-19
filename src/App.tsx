@@ -16,6 +16,7 @@ import MultiTimerApp from './pages/countDownApp/MultiTimerApp';
 import FareForm from './pages/FareForm/Dashboard';
 import JobTracker from './pages/JobTracker';
 import VendingMachine from './pages/VendingMachine';
+import ReactCheatSheet from './pages/reactAnswersApp/ReactCheatSheet';
 
 export default function App() {
   return (
@@ -33,6 +34,7 @@ export default function App() {
           <Route path='/timer' element={<MultiTimerApp />} />
           <Route path='/ticketPriceGenerator' element={<FareForm />} />
           <Route path='/vendingMachine' element={<VendingMachine />} />
+          <Route path='/reactCheatSheet' element={<ReactCheatSheet />} />
 
           {/* Protected routes with Navbar */}
           <Route
