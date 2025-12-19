@@ -217,62 +217,67 @@
       ]
     }
   ],
-
   "amazon_specific": [
     {
       "question": "Explain a time you optimized a React application's performance.",
-      "answer": "Amazon interviewers want measurable impact and deep understanding of rendering behavior.",
       "bullets": [
-        "Describe the bottleneck",
-        "Explain virtual DOM cost",
-        "Describe memoization or state isolation",
-        "Share metrics (ms reduced, % improvement)"
-      ]
+        "Identify the bottleneck (slow renders, large lists, unnecessary re-renders).",
+        "Explain why React was re-rendering (state structure, prop identity, context usage).",
+        "Show what tools you used (React Profiler, performance tab).",
+        "Describe the optimization technique (memoization, virtualization, splitting state).",
+        "End with measurable results."
+      ],
+      "example_answer": "In one project our page was lagging every time users expanded a large table. Profiling showed the entire component tree was re-rendering because the parent stored too much global state and passed unstable inline callbacks to children. I localized state into smaller components, memoized child rows with React.memo, and wrapped expensive callbacks with useCallback. For large datasets, I added react-window to virtualize the list. This reduced render time from ~180ms to under 20ms and eliminated noticeable UI lag. Amazon interviewers want to hear that you diagnosed the issue, understood why React was re-rendering, and applied targeted optimizations."
     },
     {
       "question": "How would you design a reusable component system?",
-      "answer": "Amazon expects strong component-driven architecture and separation of concerns.",
       "bullets": [
-        "Component API design",
-        "Props vs context",
-        "Styling strategy (CSS modules, Tailwind, styled-components)",
-        "Accessibility baked in",
-        "Testing strategy"
-      ]
+        "Define clear component boundaries and APIs.",
+        "Separate presentational and logical layers.",
+        "Use props for configuration; avoid hard-coded logic.",
+        "Ensure accessibility is built in (labels, aria, keyboard nav).",
+        "Make style overrides predictable (className, style props).",
+        "Add tests to guarantee behavior across use cases."
+      ],
+      "example_answer": "A strong reusable component system starts with clear boundaries: each component handles one responsibility and exposes a simple, predictable API. For example, a reusable Button may accept size, variant, disabled, and onClick props, but should not contain business logic. I separate UI from logic using custom hooks where appropriate, which also improves testability. To ensure accessibility, I implement proper aria attributes and full keyboard support in the base component so downstream teams don't need to reinvent it. Finally, I allow teams to override styles via className or style props while preserving a consistent internal structure. This approach scales well in large organizations like Amazon where multiple teams share UI primitives."
     },
     {
-      "question": "How would you ensure accessibility in a React app?",
-      "answer": "Amazon heavily emphasizes accessibility in consumer-facing products.",
+      "question": "How would you ensure accessibility in a React application?",
       "bullets": [
-        "Semantic HTML",
-        "Keyboard navigation",
-        "Correct ARIA usage",
-        "Color contrast compliance",
-        "Screen reader testing"
-      ]
+        "Use semantic HTML first.",
+        "Implement full keyboard navigation.",
+        "Use proper aria attributes only when needed.",
+        "Ensure color contrast meets WCAG standards.",
+        "Test with screen readers and automated tools.",
+        "Design components so accessibility is built-in."
+      ],
+      "example_answer": "I start with semantic HTML elements like <button>, <nav>, and <label> because they provide built-in screen reader and keyboard support. For interactive components, I ensure complete keyboard accessibility including focus management and escape flows. When semantics aren't enough, I add aria-label, aria-describedby, or role attributes. I verify color contrast using WCAG AA standards and run automated checks using tools like axe or Lighthouse. In more complex flows, I test with VoiceOver or NVDA to ensure dynamic updates are properly announced. At Amazon scale, I also push accessibility concerns into reusable components so every product downstream gets accessibility by default."
     },
     {
       "question": "How do you prevent unnecessary re-renders in React?",
-      "answer": "Amazon wants deep understanding of rendering pipeline and hooks.",
       "bullets": [
-        "React.memo",
-        "useCallback/useMemo",
-        "Move state closer to where it’s used",
-        "Avoid derived state",
-        "Key stability"
-      ]
+        "Use React.memo for pure child components.",
+        "useCallback to stabilize function references.",
+        "useMemo to avoid expensive recalculations.",
+        "Move state closer to where it is used.",
+        "Avoid passing new objects/arrays inline.",
+        "Be careful with context because it re-renders all consumers."
+      ],
+      "example_answer": "To prevent unnecessary re-renders, I start by analyzing which components rely on which pieces of state. If a parent holds too much state, children will re-render even when their data hasn't changed, so I move state closer to the components that actually use it. I wrap pure child components in React.memo and use useCallback to stabilize function props. For expensive computations, I use useMemo so they're not recalculated on every render. I also avoid inline object literals or arrays because they create new references each render. When using context, I either split it into multiple providers or use selectors to avoid re-rendering the entire subtree. This combination keeps the UI responsive and the render tree efficient."
     },
     {
       "question": "How would you architect a large-scale React application?",
-      "answer": "Amazon assesses system-level thinking at the front-end layer.",
       "bullets": [
-        "Feature-based folder structure",
-        "Shared component libraries",
-        "State management (Redux, RTK, Zustand, context)",
-        "Lazy loading",
-        "Error boundaries",
-        "API abstraction layer"
-      ]
+        "Use a modular, feature-based folder structure.",
+        "Build reusable component libraries.",
+        "Separate UI, business logic, and data fetching.",
+        "Use state management wisely (Redux, Zustand, context, RTK).",
+        "Implement code splitting and lazy loading.",
+        "Provide consistent error boundaries.",
+        "Have a clear API layer abstraction.",
+        "Include accessibility and testing in the core architecture."
+      ],
+      "example_answer": "For a large-scale React app like those at Amazon, I start with a feature-based architecture where each domain (Cart, Search, Profile) has its own components, hooks, and tests. I keep UI components pure and stateless, moving business logic into custom hooks or dedicated services to improve maintainability. Shared components go into a design system library to ensure consistency across teams. For global state, I prefer Redux Toolkit or Zustand depending on complexity, while local UI state stays inside components. I add lazy loading for routes and expensive components to reduce bundle size. A unified API layer abstracts fetch logic and provides error handling and caching. Finally, every feature includes accessibility and test coverage so scaling the codebase remains safe and predictable."
     }
   ]
 }
