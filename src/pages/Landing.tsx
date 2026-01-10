@@ -144,6 +144,14 @@ export default function Landing() {
       color: '#372554',
     },
     {
+      path: '/pokemonHeartGold',
+      title: 'Pokemon Location Finder',
+      description:
+        'Find where to catch Pokemon in any game version using real PokeAPI data.',
+      icon: '🔴',
+      color: '#c7365f',
+    },
+    {
       path: '/dashboard',
       title: 'User Dashboard',
       description: 'Access your personalized dashboard (requires login).',

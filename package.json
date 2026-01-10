@@ -16,9 +16,11 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+    "@types/react-helmet": "^6.1.11",
     "aws-amplify": "^6.6.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-helmet": "^6.1.0",
     "react-router-dom": "^7.6.2",
     "styled-components": "^6.1.19",
     "uuid": "^11.1.0"

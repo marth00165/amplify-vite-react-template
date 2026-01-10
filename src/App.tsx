@@ -17,6 +17,8 @@ import FareForm from './pages/FareForm/Dashboard';
 import JobTracker from './pages/JobTracker';
 import VendingMachine from './pages/VendingMachine';
 import ReactCheatSheet from './pages/reactAnswersApp/ReactCheatSheet';
+import MightyCoders from './pages/MightyCoders';
+import PokemonLocator from './pages/PokemonHeartGoldLocator';
 
 export default function App() {
   return (
@@ -35,6 +37,7 @@ export default function App() {
           <Route path='/ticketPriceGenerator' element={<FareForm />} />
           <Route path='/vendingMachine' element={<VendingMachine />} />
           <Route path='/reactCheatSheet' element={<ReactCheatSheet />} />
+          <Route path='/pokemonHeartGold' element={<PokemonLocator />} />
 
           {/* Protected routes with Navbar */}
           <Route
@@ -48,6 +51,7 @@ export default function App() {
             <Route path='/dashboard' element={<Dashboard />} />
             <Route path='/profile' element={<ProfilePage />} />
             <Route path='/jobs' element={<JobTracker />} />
+            <Route path='/mightyCoders' element={<MightyCoders />} />
           </Route>
 
           {/* Optional catch-all */}

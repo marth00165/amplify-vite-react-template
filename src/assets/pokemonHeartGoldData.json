@@ -1,0 +1,103 @@
+{
+  "Normal": [
+    "Rattata","Raticate","Sentret","Furret","Aipom","Dunsparce",
+    "Snubbull","Granbull","Stantler","Smeargle","Miltank",
+    "Tauros","Kangaskhan","Ditto","Eevee","Porygon",
+    "Whismur","Loudred","Exploud","Zigzagoon","Linoone",
+    "Bidoof","Bibarel"
+  ],
+  "Fire": [
+    "Cyndaquil","Quilava","Typhlosion","Growlithe","Arcanine",
+    "Magmar","Numel","Camerupt","Charmander","Charmeleon",
+    "Charizard","Vulpix","Ninetales","Ho-Oh"
+  ],
+  "Water": [
+    "Totodile","Croconaw","Feraligatr","Magikarp","Gyarados",
+    "Poliwag","Poliwhirl","Poliwrath","Psyduck","Golduck",
+    "Tentacool","Tentacruel","Slowpoke","Slowbro",
+    "Seel","Dewgong","Shellder","Cloyster","Krabby","Kingler",
+    "Goldeen","Seaking","Staryu","Starmie","Lapras",
+    "Remoraid","Octillery","Buizel","Floatzel",
+    "Wingull","Pelipper","Mantine","Wooper","Quagsire",
+    "Qwilfish","Whiscash"
+  ],
+  "Grass": [
+    "Chikorita","Bayleef","Meganium","Oddish","Gloom","Vileplume",
+    "Paras","Parasect","Bellsprout","Weepinbell","Victreebel",
+    "Exeggcute","Exeggutor","Tangela","Hoppip","Skiploom",
+    "Jumpluff","Seedot","Nuzleaf","Shiftry","Shroomish",
+    "Breloom","Budew","Roselia","Carnivine",
+    "Bulbasaur","Ivysaur","Venusaur"
+  ],
+  "Electric": [
+    "Pichu","Pikachu","Raichu","Magnemite","Magneton",
+    "Voltorb","Electrode","Chinchou","Lanturn",
+    "Mareep","Flaaffy","Ampharos",
+    "Plusle","Minun","Shinx","Luxio","Luxray"
+  ],
+  "Ice": [
+    "Swinub","Piloswine","Jynx","Lapras","Sneasel","Delibird"
+  ],
+  "Fighting": [
+    "Mankey","Primeape","Machop","Machoke","Machamp",
+    "Tyrogue","Hitmonlee","Hitmonchan","Hitmontop",
+    "Heracross","Makuhita","Hariyama","Meditite","Medicham"
+  ],
+  "Poison": [
+    "Weedle","Kakuna","Beedrill","Ekans","Arbok",
+    "Nidoran♀","Nidorina","Nidoqueen",
+    "Nidoran♂","Nidorino","Nidoking",
+    "Zubat","Golbat","Venonat","Venomoth",
+    "Tentacool","Tentacruel","Koffing","Weezing",
+    "Spinarak","Ariados","Qwilfish","Dustox"
+  ],
+  "Ground": [
+    "Diglett","Dugtrio","Cubone","Marowak",
+    "Wooper","Quagsire","Gligar","Phanpy","Donphan",
+    "Nincada","Trapinch","Vibrava","Flygon",
+    "Numel","Camerupt","Whiscash",
+    "Rhyhorn","Rhydon",
+    "Larvitar","Pupitar","Tyranitar"
+  ],
+  "Flying": [
+    "Pidgey","Pidgeotto","Pidgeot","Spearow","Fearow",
+    "Farfetch'd","Doduo","Dodrio","Hoothoot","Noctowl",
+    "Yanma","Mantine","Taillow","Swellow",
+    "Wingull","Pelipper","Swablu","Altaria",
+    "Starly","Staravia","Staraptor","Chatot",
+    "Lugia","Ho-Oh"
+  ],
+  "Psychic": [
+    "Abra","Kadabra","Alakazam","Slowpoke","Slowbro",
+    "Drowzee","Hypno","Mr. Mime","Natu","Xatu",
+    "Espeon","Girafarig","Ralts","Kirlia","Gardevoir",
+    "Spoink","Grumpig","Chingling","Chimecho",
+    "Bronzor","Bronzong","Latios"
+  ],
+  "Bug": [
+    "Caterpie","Metapod","Butterfree","Paras","Parasect",
+    "Venonat","Venomoth","Scyther","Pinsir","Yanma",
+    "Pineco","Forretress","Wurmple","Silcoon","Beautifly",
+    "Cascoon","Dustox","Nincada","Ninjask","Shedinja",
+    "Volbeat","Illumise","Kricketot","Kricketune",
+    "Burmy","Wormadam","Combee","Vespiquen",
+    "Shuckle","Heracross","Spinarak","Ariados"
+  ],
+  "Rock": [
+    "Geodude","Graveler","Golem","Onix","Steelix",
+    "Rhyhorn","Rhydon","Sudowoodo","Shuckle",
+    "Larvitar","Pupitar","Tyranitar"
+  ],
+  "Ghost": [
+    "Gastly","Haunter","Gengar","Misdreavus"
+  ],
+  "Dragon": [
+    "Dratini","Dragonair","Dragonite","Latios"
+  ],
+  "Dark": [
+    "Sneasel","Absol","Umbreon","Tyranitar"
+  ],
+  "Steel": [
+    "Magnemite","Magneton","Steelix","Bronzor","Bronzong"
+  ]
+}
