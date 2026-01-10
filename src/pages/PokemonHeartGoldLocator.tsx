@@ -7,6 +7,52 @@ interface EncounterMethod {
   name: string;
 }
 
+// Evolution chain types
+interface EvolutionDetail {
+  min_level?: number;
+  min_happiness?: number;
+  min_affection?: number;
+  time_of_day?: string;
+  held_item?: {
+    name: string;
+  } | null;
+  item?: {
+    name: string;
+  } | null;
+  known_move?: {
+    name: string;
+  } | null;
+  location?: {
+    name: string;
+  } | null;
+  trigger: {
+    name: string;
+  };
+}
+
+interface EvolutionChainNode {
+  species: {
+    name: string;
+  };
+  evolution_details: EvolutionDetail[];
+  evolves_to: EvolutionChainNode[];
+}
+
+interface EvolutionChain {
+  chain: EvolutionChainNode;
+}
+
+interface PokemonSpecies {
+  evolution_chain: {
+    url: string;
+  };
+}
+
+interface EvolutionData {
+  preEvolution: string;
+  condition: string;
+}
+
 interface EncounterDetail {
   min_level: number;
   max_level: number;
@@ -165,6 +211,60 @@ const CacheIndicator = styled.div`
   gap: 8px;
 `;
 
+const EvolutionHint = styled.div`
+  background: rgba(255, 193, 7, 0.2);
+  border: 1px solid rgba(255, 193, 7, 0.5);
+  color: #fff3cd;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  text-align: center;
+`;
+
+const EvolutionButton = styled.button`
+  background: #4caf50;
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 10px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #45a049;
+    transform: translateY(-1px);
+  }
+`;
+
+const SuggestionsContainer = styled.div`
+  background: rgba(33, 150, 243, 0.2);
+  border: 1px solid rgba(33, 150, 243, 0.5);
+  color: #bbdefb;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  text-align: center;
+`;
+
+const SuggestionButton = styled.button`
+  background: rgba(33, 150, 243, 0.3);
+  border: 1px solid rgba(33, 150, 243, 0.6);
+  color: #bbdefb;
+  padding: 8px 15px;
+  border-radius: 20px;
+  margin: 5px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(33, 150, 243, 0.4);
+    transform: translateY(-1px);
+  }
+`;
+
 const FilterRow = styled.div`
   display: flex;
   gap: 20px;
@@ -204,8 +304,7 @@ const Select = styled.select`
 `;
 
 const ResultsContainer = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
+  margin-top: 30px;
 `;
 
 const PokemonCard = styled.div`
@@ -278,6 +377,10 @@ const PokemonLocator: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [isFromCache, setIsFromCache] = useState(false);
+  const [evolutionData, setEvolutionData] = useState<EvolutionData | null>(
+    null
+  );
+  const [suggestions, setSuggestions] = useState<string[]>([]);
 
   // SEO meta data based on current search
   const getPageTitle = () => {
@@ -350,7 +453,7 @@ const PokemonLocator: React.FC = () => {
 
   // Cache configuration
   const CACHE_KEY = 'pokemon-locator-cache-v2'; // Updated version to invalidate old cache
-  const CACHE_EXPIRY_HOURS = 24; // Cache for 24 hours
+  const CACHE_EXPIRY_MINUTES = 1; // Cache for 1 minute
 
   // Clean up old cache format on mount
   useEffect(() => {
@@ -381,9 +484,9 @@ const PokemonLocator: React.FC = () => {
 
       const now = new Date().getTime();
       const cacheTime = new Date(cacheEntry.timestamp).getTime();
-      const hoursDiff = (now - cacheTime) / (1000 * 60 * 60);
+      const minutesDiff = (now - cacheTime) / (1000 * 60);
 
-      if (hoursDiff > CACHE_EXPIRY_HOURS) {
+      if (minutesDiff > CACHE_EXPIRY_MINUTES) {
         // Cache expired, remove entry
         delete parsedCache[cacheKey];
         localStorage.setItem(CACHE_KEY, JSON.stringify(parsedCache));
@@ -419,6 +522,67 @@ const PokemonLocator: React.FC = () => {
     }
   };
 
+  // Spell checking and suggestion functions
+  const levenshteinDistance = (str1: string, str2: string): number => {
+    const matrix = [];
+
+    for (let i = 0; i <= str2.length; i++) {
+      matrix[i] = [i];
+    }
+
+    for (let j = 0; j <= str1.length; j++) {
+      matrix[0][j] = j;
+    }
+
+    for (let i = 1; i <= str2.length; i++) {
+      for (let j = 1; j <= str1.length; j++) {
+        if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1,
+            matrix[i][j - 1] + 1,
+            matrix[i - 1][j] + 1
+          );
+        }
+      }
+    }
+
+    return matrix[str2.length][str1.length];
+  };
+
+  const getSimilarPokemonNames = async (
+    searchTerm: string
+  ): Promise<string[]> => {
+    try {
+      // Get list of all Pokemon from API
+      const response = await fetch(
+        'https://pokeapi.co/api/v2/pokemon?limit=1000'
+      );
+      if (!response.ok) return [];
+
+      const data = await response.json();
+      const allPokemon = data.results.map((p: any) => p.name);
+
+      // Find similar names using Levenshtein distance
+      const searchLower = searchTerm.toLowerCase();
+      const similar = allPokemon
+        .map((name: string) => ({
+          name,
+          distance: levenshteinDistance(searchLower, name),
+        }))
+        .filter((item: any) => item.distance <= 3 && item.distance > 0) // Allow up to 3 character differences
+        .sort((a: any, b: any) => a.distance - b.distance)
+        .slice(0, 5) // Top 5 suggestions
+        .map((item: any) => item.name);
+
+      return similar;
+    } catch (error) {
+      console.error('Error fetching Pokemon suggestions:', error);
+      return [];
+    }
+  };
+
   // Helper function to format location names
   const formatLocationName = (name: string): string => {
     return name
@@ -426,6 +590,121 @@ const PokemonLocator: React.FC = () => {
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ')
       .replace(/\s+Area$/, '');
+  };
+
+  // Helper function to get immediate pre-evolution form and condition
+  const getPreEvolution = async (
+    pokemonName: string
+  ): Promise<EvolutionData | null> => {
+    try {
+      const speciesResponse = await fetch(
+        `https://pokeapi.co/api/v2/pokemon-species/${pokemonName.toLowerCase()}`
+      );
+      if (!speciesResponse.ok) return null;
+
+      const speciesData: PokemonSpecies = await speciesResponse.json();
+      const evolutionResponse = await fetch(speciesData.evolution_chain.url);
+      if (!evolutionResponse.ok) return null;
+
+      const evolutionData: EvolutionChain = await evolutionResponse.json();
+
+      // Helper to format evolution conditions
+      const formatEvolutionCondition = (details: EvolutionDetail[]): string => {
+        if (!details || details.length === 0) return '';
+
+        const detail = details[0]; // Take the first evolution detail
+        const conditions: string[] = [];
+
+        // Base trigger condition
+        if (detail.min_level) {
+          conditions.push(`at level ${detail.min_level}`);
+        } else if (detail.trigger.name === 'level-up') {
+          conditions.push('by leveling up');
+        } else if (detail.trigger.name === 'trade') {
+          conditions.push('by trading');
+        } else if (detail.trigger.name === 'use-item') {
+          conditions.push('with an item');
+        }
+
+        // Additional conditions
+        if (detail.time_of_day) {
+          conditions.push(`during ${detail.time_of_day}`);
+        }
+
+        if (detail.held_item) {
+          const itemName = detail.held_item.name
+            .split('-')
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+          conditions.push(`while holding ${itemName}`);
+        }
+
+        if (detail.item) {
+          const itemName = detail.item.name
+            .split('-')
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+          conditions.push(`using ${itemName}`);
+        }
+
+        if (detail.min_happiness) {
+          conditions.push(`with high friendship`);
+        }
+
+        if (detail.min_affection) {
+          conditions.push(`with high affection`);
+        }
+
+        if (detail.known_move) {
+          const moveName = detail.known_move.name
+            .split('-')
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+          conditions.push(`knowing ${moveName}`);
+        }
+
+        if (detail.location) {
+          const locationName = detail.location.name
+            .split('-')
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+          conditions.push(`at ${locationName}`);
+        }
+
+        // Fallback for unknown triggers
+        if (conditions.length === 0) {
+          return `by ${detail.trigger.name.replace('-', ' ')}`;
+        }
+
+        return conditions.join(' ');
+      };
+
+      // Find the immediate pre-evolution by traversing the evolution tree
+      const findImmediatePreEvolution = (
+        chain: EvolutionChainNode,
+        target: string
+      ): EvolutionData | null => {
+        // Check if any direct evolution of this Pokemon is our target
+        for (const evolution of chain.evolves_to) {
+          if (evolution.species.name === target.toLowerCase()) {
+            return {
+              preEvolution: chain.species.name,
+              condition: formatEvolutionCondition(evolution.evolution_details),
+            };
+          }
+
+          // Recursively check deeper evolutions
+          const result = findImmediatePreEvolution(evolution, target);
+          if (result) return result;
+        }
+        return null;
+      };
+
+      return findImmediatePreEvolution(evolutionData.chain, pokemonName);
+    } catch (error) {
+      console.error('Error fetching evolution data:', error);
+      return null;
+    }
   };
 
   // Helper function to format method names
@@ -452,6 +731,8 @@ const PokemonLocator: React.FC = () => {
       setLoading(true);
       setError('');
       setPokemonData(null);
+      setEvolutionData(null); // Reset evolution suggestion
+      setSuggestions([]); // Reset suggestions
 
       // Check cache first
       const cachedData = getCachedData(pokemonName, selectedGame, selectedTime);
@@ -469,6 +750,9 @@ const PokemonLocator: React.FC = () => {
 
         if (!response.ok) {
           if (response.status === 404) {
+            // Get suggestions for misspelled Pokemon names
+            const similarNames = await getSimilarPokemonNames(pokemonName);
+            setSuggestions(similarNames);
             throw new Error(`Pokémon "${pokemonName}" not found`);
           }
           throw new Error('Failed to fetch Pokémon data');
@@ -561,6 +845,21 @@ const PokemonLocator: React.FC = () => {
         setCachedData(pokemonName, selectedGame, selectedTime, result);
         setPokemonData(result);
         setIsFromCache(false);
+
+        // Check if we have limited/no data and suggest pre-evolution
+        if (gameLocations.length === 0 || gameLocations.length < 3) {
+          const evolutionInfo = await getPreEvolution(pokemonName);
+          if (
+            evolutionInfo &&
+            evolutionInfo.preEvolution !== pokemonName.toLowerCase()
+          ) {
+            setEvolutionData(evolutionInfo);
+          } else {
+            setEvolutionData(null);
+          }
+        } else {
+          setEvolutionData(null);
+        }
 
         if (gameLocations.length === 0) {
           setError(
@@ -710,6 +1009,52 @@ const PokemonLocator: React.FC = () => {
           </SearchForm>
 
           {error && <ErrorMessage>{error}</ErrorMessage>}
+
+          {suggestions.length > 0 && (
+            <SuggestionsContainer>
+              🔍 Did you mean one of these?
+              <div>
+                {suggestions.map((suggestion) => (
+                  <SuggestionButton
+                    key={suggestion}
+                    onClick={() => {
+                      setSearchTerm(suggestion);
+                      setSuggestions([]);
+                    }}
+                  >
+                    {suggestion.charAt(0).toUpperCase() + suggestion.slice(1)}
+                  </SuggestionButton>
+                ))}
+              </div>
+            </SuggestionsContainer>
+          )}
+
+          {evolutionData && (
+            <EvolutionHint>
+              💡 This Pokémon evolves from{' '}
+              <strong>
+                {evolutionData.preEvolution.charAt(0).toUpperCase() +
+                  evolutionData.preEvolution.slice(1)}
+              </strong>
+              {evolutionData.condition && (
+                <span> {evolutionData.condition}</span>
+              )}
+              . You might find more encounter locations by searching for its
+              pre-evolution form.
+              <br />
+              <EvolutionButton
+                onClick={() => {
+                  setSearchTerm(evolutionData.preEvolution);
+                  setEvolutionData(null);
+                }}
+              >
+                Search{' '}
+                {evolutionData.preEvolution.charAt(0).toUpperCase() +
+                  evolutionData.preEvolution.slice(1)}{' '}
+                instead
+              </EvolutionButton>
+            </EvolutionHint>
+          )}
         </SearchContainer>
 
         <ResultsContainer role='main' aria-live='polite'>
