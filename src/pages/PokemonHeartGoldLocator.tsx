@@ -1619,50 +1619,6 @@ const PokemonLocator: React.FC = () => {
     setFilterMethod('');
   };
 
-  // Filter function for results
-  const filterResults = (items: any[]) => {
-    return items.filter((item) => {
-      // Text filter (Pokemon name or location name)
-      const nameMatch =
-        filterText === '' ||
-        (item.pokemon &&
-          item.pokemon.toLowerCase().includes(filterText.toLowerCase())) ||
-        (item.location &&
-          item.location.toLowerCase().includes(filterText.toLowerCase()));
-
-      // Level filter
-      const levelMatch =
-        filterLevel === '' ||
-        (item.methods &&
-          item.methods.some((method: any) => {
-            const levels = method.levels.toString();
-            return (
-              levels.includes(filterLevel) ||
-              (levels.includes('-') &&
-                parseInt(filterLevel) >= parseInt(levels.split('-')[0]) &&
-                parseInt(filterLevel) <= parseInt(levels.split('-')[1]))
-            );
-          })) ||
-        (item.levels &&
-          (item.levels.includes(filterLevel) ||
-            (item.levels.includes('-') &&
-              parseInt(filterLevel) >= parseInt(item.levels.split('-')[0]) &&
-              parseInt(filterLevel) <= parseInt(item.levels.split('-')[1]))));
-
-      // Method filter
-      const methodMatch =
-        filterMethod === '' ||
-        (item.methods &&
-          item.methods.some((method: any) =>
-            method.method.toLowerCase().includes(filterMethod.toLowerCase())
-          )) ||
-        (item.method &&
-          item.method.toLowerCase().includes(filterMethod.toLowerCase()));
-
-      return nameMatch && levelMatch && methodMatch;
-    });
-  };
-
   // Get unique methods for filter dropdown
   const getUniqueMethods = () => {
     const methods = new Set<string>();
@@ -2103,15 +2059,17 @@ const PokemonLocator: React.FC = () => {
                         {pokemon.pokemon}
                       </LocationPokemonName>
                       <MethodList>
-                        {pokemon.methods.map((method, methodIndex) => (
-                          <MethodItem key={methodIndex}>
-                            <MethodName>{method.method}</MethodName>
-                            <MethodDetail>
-                              <span>Level: {method.levels}</span>
-                              <span>Rate: {method.rate}</span>
-                            </MethodDetail>
-                          </MethodItem>
-                        ))}
+                        {pokemon.methods.map(
+                          (method: any, methodIndex: number) => (
+                            <MethodItem key={methodIndex}>
+                              <MethodName>{method.method}</MethodName>
+                              <MethodDetail>
+                                <span>Level: {method.levels}</span>
+                                <span>Rate: {method.rate}</span>
+                              </MethodDetail>
+                            </MethodItem>
+                          )
+                        )}
                       </MethodList>
                     </LocationPokemonCard>
                   )

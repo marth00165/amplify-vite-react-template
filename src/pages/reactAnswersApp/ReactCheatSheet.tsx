@@ -172,7 +172,8 @@ const ReactCheatSheet: React.FC = () => {
           const questionMatch = item.question
             .toLowerCase()
             .includes(searchLower);
-          const answerMatch = item.answer.toLowerCase().includes(searchLower);
+          const answerMatch =
+            (item as any).answer?.toLowerCase().includes(searchLower) || false;
           const bulletsMatch =
             item.bullets?.some((bullet) =>
               bullet.toLowerCase().includes(searchLower)
@@ -221,7 +222,7 @@ const ReactCheatSheet: React.FC = () => {
             <CategoryHeader>{category}</CategoryHeader>
             <ul>
               {items.map((item, index) => {
-                const { question, answer } = item;
+                const { question, answer } = item as any;
                 return (
                   <StyledLI
                     onClick={() => handleItemClick(item)}

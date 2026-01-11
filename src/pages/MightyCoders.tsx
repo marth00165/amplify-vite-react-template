@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
+// import PropTypes from 'prop-types';
 
 const MightyCoders = () => {
-  const [number, setNumber] = useState(0);
+  // const [number, setNumber] = useState(0);
   return (
     <div
       style={{
@@ -12,7 +11,7 @@ const MightyCoders = () => {
         justifyContent: 'center',
       }}
     >
-      {number}
+      {/* {number} */}
     </div>
   );
 };
