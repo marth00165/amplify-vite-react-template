@@ -53,6 +53,20 @@ interface EvolutionData {
   condition: string;
 }
 
+interface LocationPokemon {
+  pokemon: string;
+  methods: {
+    method: string;
+    levels: string;
+    rate: string;
+  }[];
+}
+
+interface LocationData {
+  name: string;
+  pokemon: LocationPokemon[];
+}
+
 interface EncounterDetail {
   min_level: number;
   max_level: number;
@@ -265,6 +279,127 @@ const SuggestionButton = styled.button`
   }
 `;
 
+const LocationCard = styled.div`
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 20px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+`;
+
+const LocationCardTitle = styled.h3`
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+  color: #fff;
+  text-align: center;
+`;
+
+const PokemonGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+`;
+
+const LocationPokemonCard = styled.div`
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.15);
+  }
+`;
+
+const LocationPokemonName = styled.h4`
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  color: #ffd54f;
+  text-transform: capitalize;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  text-align: center;
+`;
+
+const MethodList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const MethodItem = styled.div`
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+`;
+
+const MethodName = styled.div`
+  font-size: 0.9rem;
+  color: #81c784;
+  font-weight: bold;
+  margin-bottom: 4px;
+`;
+
+const MethodDetail = styled.div`
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const FiltersContainer = styled.div`
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+`;
+
+const FilterGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+`;
+
+const FilterInput = styled.input`
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+  font-size: 14px;
+
+  &:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.6);
+  }
+
+  &::placeholder {
+    color: #666;
+  }
+`;
+
+const ClearFiltersButton = styled.button`
+  background: rgba(255, 107, 107, 0.3);
+  border: 1px solid rgba(255, 107, 107, 0.5);
+  color: #ffcccb;
+  padding: 8px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 107, 107, 0.4);
+  }
+`;
+
 const FilterRow = styled.div`
   display: flex;
   gap: 20px;
@@ -330,12 +465,6 @@ const LocationGrid = styled.div`
   margin-top: 15px;
 `;
 
-const LocationCard = styled.div`
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
-  padding: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-`;
 const PokemonName = styled.h3`
   font-size: 1.5rem;
   margin-bottom: 15px;
@@ -381,6 +510,15 @@ const PokemonLocator: React.FC = () => {
     null
   );
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [availableLocations, setAvailableLocations] = useState<string[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<string>('');
+  const [locationData, setLocationData] = useState<LocationData | null>(null);
+  const [browsingMode, setBrowsingMode] = useState<'pokemon' | 'location'>(
+    'pokemon'
+  );
+  const [filterText, setFilterText] = useState<string>('');
+  const [filterLevel, setFilterLevel] = useState<string>('');
+  const [filterMethod, setFilterMethod] = useState<string>('');
 
   // SEO meta data based on current search
   const getPageTitle = () => {
@@ -430,17 +568,51 @@ const PokemonLocator: React.FC = () => {
 
   // Game versions available in PokeAPI
   const gameVersions = [
-    { value: 'heartgold', label: 'Pokemon HeartGold' },
-    { value: 'soulsilver', label: 'Pokemon SoulSilver' },
+    // Generation 1
+    { value: 'red', label: 'Pokemon Red' },
+    { value: 'blue', label: 'Pokemon Blue' },
+    { value: 'yellow', label: 'Pokemon Yellow' },
+
+    // Generation 2
+    { value: 'gold', label: 'Pokemon Gold' },
+    { value: 'silver', label: 'Pokemon Silver' },
+    { value: 'crystal', label: 'Pokemon Crystal' },
+
+    // Generation 3
+    { value: 'ruby', label: 'Pokemon Ruby' },
+    { value: 'sapphire', label: 'Pokemon Sapphire' },
+    { value: 'emerald', label: 'Pokemon Emerald' },
+    { value: 'firered', label: 'Pokemon FireRed' },
+    { value: 'leafgreen', label: 'Pokemon LeafGreen' },
+
+    // Generation 4
     { value: 'diamond', label: 'Pokemon Diamond' },
     { value: 'pearl', label: 'Pokemon Pearl' },
     { value: 'platinum', label: 'Pokemon Platinum' },
+    { value: 'heartgold', label: 'Pokemon HeartGold' },
+    { value: 'soulsilver', label: 'Pokemon SoulSilver' },
+
+    // Generation 5
     { value: 'black', label: 'Pokemon Black' },
     { value: 'white', label: 'Pokemon White' },
     { value: 'black-2', label: 'Pokemon Black 2' },
     { value: 'white-2', label: 'Pokemon White 2' },
+
+    // Generation 6
     { value: 'x', label: 'Pokemon X' },
     { value: 'y', label: 'Pokemon Y' },
+    { value: 'omega-ruby', label: 'Pokemon Omega Ruby' },
+    { value: 'alpha-sapphire', label: 'Pokemon Alpha Sapphire' },
+
+    // Generation 7
+    { value: 'sun', label: 'Pokemon Sun' },
+    { value: 'moon', label: 'Pokemon Moon' },
+    { value: 'ultra-sun', label: 'Pokemon Ultra Sun' },
+    { value: 'ultra-moon', label: 'Pokemon Ultra Moon' },
+
+    // Generation 8
+    { value: 'sword', label: 'Pokemon Sword' },
+    { value: 'shield', label: 'Pokemon Shield' },
   ];
 
   // Time of day options
@@ -465,6 +637,49 @@ const PokemonLocator: React.FC = () => {
       }
     });
   }, []);
+
+  // Fetch available locations when game changes
+  useEffect(() => {
+    const loadLocations = async () => {
+      if (browsingMode === 'location') {
+        setLoading(true);
+        const locations = await fetchAvailableLocations(selectedGame);
+        setAvailableLocations(locations);
+        setLoading(false);
+
+        // Reset selected location when game changes
+        setSelectedLocation('');
+        setLocationData(null);
+      }
+    };
+
+    loadLocations();
+  }, [selectedGame, browsingMode]);
+
+  // Auto-hide evolution suggestion after 15 seconds
+  useEffect(() => {
+    if (evolutionData) {
+      const timer = setTimeout(() => {
+        setEvolutionData(null);
+      }, 15000); // 15 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [evolutionData]);
+
+  // Clear evolution suggestion when switching to location mode
+  useEffect(() => {
+    if (browsingMode === 'location') {
+      setEvolutionData(null);
+    }
+  }, [browsingMode]);
+
+  // Refresh location data when time changes (if location is selected)
+  useEffect(() => {
+    if (browsingMode === 'location' && selectedLocation) {
+      handleLocationSelect(selectedLocation);
+    }
+  }, [selectedTime, browsingMode, selectedLocation]);
 
   // Cache helper functions
   const getCachedData = (
@@ -580,6 +795,495 @@ const PokemonLocator: React.FC = () => {
     } catch (error) {
       console.error('Error fetching Pokemon suggestions:', error);
       return [];
+    }
+  };
+
+  // Location browsing functions
+  const fetchAvailableLocations = async (
+    gameName: string
+  ): Promise<string[]> => {
+    try {
+      // Instead of trying to get all locations, we'll build a set of locations
+      // by sampling Pokemon and collecting their encounter locations for this game
+      const samplePokemonIds = [
+        1, 4, 7, 10, 16, 19, 21, 25, 32, 35, 39, 41, 43, 46, 48, 50, 52, 54, 56,
+        58, 60, 63, 66, 69, 72, 74, 77, 79, 81, 84, 86, 90, 92, 95, 96, 98, 100,
+        102, 104, 106, 108, 109, 111, 113, 115, 116, 118, 120, 122, 123, 124,
+        125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138,
+        140, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151,
+      ]; // Sample of Pokemon IDs to check
+
+      const locationsSet = new Set<string>();
+
+      // Check encounters for sample Pokemon
+      for (const pokemonId of samplePokemonIds.slice(0, 20)) {
+        // Limit to avoid too many API calls
+        try {
+          const encountersResponse = await fetch(
+            `https://pokeapi.co/api/v2/pokemon/${pokemonId}/encounters`
+          );
+
+          if (encountersResponse.ok) {
+            const encountersData = await encountersResponse.json();
+
+            for (const encounter of encountersData) {
+              for (const versionDetail of encounter.version_details) {
+                if (versionDetail.version.name === gameName) {
+                  // Extract location name from the location_area URL
+                  const locationAreaName = encounter.location_area.name;
+                  // Remove area suffixes to get base location name
+                  const locationName = locationAreaName.replace(
+                    /-area$|-(1f|2f|3f|b1f|b2f|b3f|b4f)$/,
+                    ''
+                  );
+                  locationsSet.add(locationName);
+                  break;
+                }
+              }
+            }
+          }
+        } catch (error) {
+          // Continue with next Pokemon if this one fails
+          continue;
+        }
+      }
+
+      const locations = Array.from(locationsSet).sort();
+
+      // If we didn't find many locations, add some common ones for the game
+      if (locations.length < 5) {
+        const commonLocations = getCommonLocationsForGame(gameName);
+        commonLocations.forEach((loc) => locationsSet.add(loc));
+      }
+
+      return Array.from(locationsSet).sort();
+    } catch (error) {
+      console.error('Error fetching locations:', error);
+      return [];
+    }
+  };
+
+  // Helper function to get common locations for each game when API sampling fails
+  const getCommonLocationsForGame = (gameName: string): string[] => {
+    const locationMap: { [key: string]: string[] } = {
+      red: [
+        'route-1',
+        'route-2',
+        'viridian-forest',
+        'route-3',
+        'mt-moon',
+        'route-4',
+        'cerulean-cave',
+      ],
+      blue: [
+        'route-1',
+        'route-2',
+        'viridian-forest',
+        'route-3',
+        'mt-moon',
+        'route-4',
+        'cerulean-cave',
+      ],
+      yellow: [
+        'route-1',
+        'route-2',
+        'viridian-forest',
+        'route-3',
+        'mt-moon',
+        'route-4',
+        'cerulean-cave',
+      ],
+      gold: [
+        'route-29',
+        'route-30',
+        'route-31',
+        'route-32',
+        'route-33',
+        'ilex-forest',
+        'route-34',
+      ],
+      silver: [
+        'route-29',
+        'route-30',
+        'route-31',
+        'route-32',
+        'route-33',
+        'ilex-forest',
+        'route-34',
+      ],
+      crystal: [
+        'route-29',
+        'route-30',
+        'route-31',
+        'route-32',
+        'route-33',
+        'ilex-forest',
+        'route-34',
+      ],
+      ruby: [
+        'route-101',
+        'route-102',
+        'route-103',
+        'petalburg-woods',
+        'route-104',
+        'route-116',
+      ],
+      sapphire: [
+        'route-101',
+        'route-102',
+        'route-103',
+        'petalburg-woods',
+        'route-104',
+        'route-116',
+      ],
+      emerald: [
+        'route-101',
+        'route-102',
+        'route-103',
+        'petalburg-woods',
+        'route-104',
+        'route-116',
+      ],
+      firered: [
+        'route-1',
+        'route-2',
+        'viridian-forest',
+        'route-3',
+        'mt-moon',
+        'route-4',
+      ],
+      leafgreen: [
+        'route-1',
+        'route-2',
+        'viridian-forest',
+        'route-3',
+        'mt-moon',
+        'route-4',
+      ],
+      diamond: [
+        'route-201',
+        'route-202',
+        'route-203',
+        'route-204',
+        'route-205',
+        'eterna-forest',
+      ],
+      pearl: [
+        'route-201',
+        'route-202',
+        'route-203',
+        'route-204',
+        'route-205',
+        'eterna-forest',
+      ],
+      platinum: [
+        'route-201',
+        'route-202',
+        'route-203',
+        'route-204',
+        'route-205',
+        'eterna-forest',
+      ],
+      heartgold: [
+        'route-29',
+        'route-30',
+        'route-31',
+        'route-32',
+        'route-33',
+        'ilex-forest',
+      ],
+      soulsilver: [
+        'route-29',
+        'route-30',
+        'route-31',
+        'route-32',
+        'route-33',
+        'ilex-forest',
+      ],
+      black: [
+        'route-1',
+        'route-2',
+        'route-3',
+        'wellspring-cave',
+        'route-4',
+        'pinwheel-forest',
+      ],
+      white: [
+        'route-1',
+        'route-2',
+        'route-3',
+        'wellspring-cave',
+        'route-4',
+        'pinwheel-forest',
+      ],
+      'black-2': [
+        'route-19',
+        'route-20',
+        'floccesy-ranch',
+        'route-1',
+        'route-2',
+        'route-3',
+      ],
+      'white-2': [
+        'route-19',
+        'route-20',
+        'floccesy-ranch',
+        'route-1',
+        'route-2',
+        'route-3',
+      ],
+      x: [
+        'route-2',
+        'route-3',
+        'santalune-forest',
+        'route-4',
+        'route-5',
+        'route-6',
+      ],
+      y: [
+        'route-2',
+        'route-3',
+        'santalune-forest',
+        'route-4',
+        'route-5',
+        'route-6',
+      ],
+      'omega-ruby': [
+        'route-101',
+        'route-102',
+        'route-103',
+        'petalburg-woods',
+        'route-104',
+      ],
+      'alpha-sapphire': [
+        'route-101',
+        'route-102',
+        'route-103',
+        'petalburg-woods',
+        'route-104',
+      ],
+      sun: [
+        'route-1',
+        'route-2',
+        'route-3',
+        'melemele-meadow',
+        'route-4',
+        'route-5',
+      ],
+      moon: [
+        'route-1',
+        'route-2',
+        'route-3',
+        'melemele-meadow',
+        'route-4',
+        'route-5',
+      ],
+      'ultra-sun': [
+        'route-1',
+        'route-2',
+        'route-3',
+        'melemele-meadow',
+        'route-4',
+        'route-5',
+      ],
+      'ultra-moon': [
+        'route-1',
+        'route-2',
+        'route-3',
+        'melemele-meadow',
+        'route-4',
+        'route-5',
+      ],
+      sword: [
+        'route-1',
+        'route-2',
+        'rolling-fields',
+        'dappled-grove',
+        'route-3',
+      ],
+      shield: [
+        'route-1',
+        'route-2',
+        'rolling-fields',
+        'dappled-grove',
+        'route-3',
+      ],
+    };
+
+    return locationMap[gameName] || ['route-1', 'route-2', 'route-3'];
+  };
+
+  const fetchLocationPokemon = async (
+    locationName: string,
+    gameName: string,
+    timeOfDay: string
+  ): Promise<LocationData | null> => {
+    try {
+      // Get location details
+      const locationResponse = await fetch(
+        `https://pokeapi.co/api/v2/location/${locationName}`
+      );
+      if (!locationResponse.ok) return null;
+
+      const locationData = await locationResponse.json();
+      const pokemonMap = new Map<string, LocationPokemon>();
+
+      // Process each area in the location
+      for (const area of locationData.areas) {
+        const areaResponse = await fetch(area.url);
+        if (!areaResponse.ok) continue;
+
+        const areaData = await areaResponse.json();
+
+        // Process encounters for each Pokemon
+        for (const encounter of areaData.pokemon_encounters) {
+          const pokemonName = encounter.pokemon.name;
+
+          // Process version details for selected game
+          for (const versionDetail of encounter.version_details) {
+            if (versionDetail.version.name === gameName) {
+              // Create a map to consolidate methods for this Pokemon
+              const methodMap = new Map<
+                string,
+                {
+                  levels: Set<number>;
+                  rates: number[];
+                }
+              >();
+
+              for (const detail of versionDetail.encounter_details) {
+                // Filter by time of day if not 'day' (default/all times)
+                const conditionValues = detail.condition_values || [];
+                const timeConditions = conditionValues.filter(
+                  (cv: any) =>
+                    cv.name &&
+                    (cv.name.includes('time') ||
+                      cv.name === 'night' ||
+                      cv.name === 'morning' ||
+                      cv.name === 'evening')
+                );
+
+                let includeEncounter = false;
+
+                if (timeOfDay === 'day') {
+                  // If user selected "day" (all times), include all encounters
+                  includeEncounter = true;
+                } else {
+                  // If user selected specific time, check conditions
+                  if (timeConditions.length === 0) {
+                    // No time conditions means available any time (include for all time selections)
+                    includeEncounter = true;
+                  } else {
+                    // Check if any time condition matches selected time
+                    includeEncounter = timeConditions.some(
+                      (condition: any) =>
+                        condition.name === timeOfDay ||
+                        (timeOfDay === 'night' &&
+                          condition.name === 'time-night') ||
+                        (timeOfDay === 'morning' &&
+                          condition.name === 'time-morning') ||
+                        (timeOfDay === 'evening' &&
+                          condition.name === 'time-evening')
+                    );
+                  }
+                }
+
+                if (includeEncounter) {
+                  const baseMethod = formatMethodName(detail.method.name);
+
+                  // Check for special conditions beyond time
+                  const specialConditions = conditionValues.filter(
+                    (cv: any) =>
+                      cv.name &&
+                      !cv.name.includes('time') &&
+                      cv.name !== 'night' &&
+                      cv.name !== 'morning' &&
+                      cv.name !== 'evening'
+                  );
+
+                  let method = baseMethod;
+                  if (specialConditions.length > 0) {
+                    // Add special condition to method name
+                    const conditionName = specialConditions[0].name;
+                    if (conditionName === 'radio') {
+                      method = 'Radio';
+                    } else if (conditionName.includes('swarm')) {
+                      method = `${baseMethod} (Swarm)`;
+                    } else if (conditionName.includes('radar')) {
+                      method = 'Poké Radar';
+                    } else {
+                      method = `${baseMethod} (${formatMethodName(
+                        conditionName
+                      )})`;
+                    }
+                  }
+
+                  if (!methodMap.has(method)) {
+                    methodMap.set(method, {
+                      levels: new Set(),
+                      rates: [],
+                    });
+                  }
+
+                  const methodData = methodMap.get(method)!;
+                  // Add all levels in the range
+                  for (let i = detail.min_level; i <= detail.max_level; i++) {
+                    methodData.levels.add(i);
+                  }
+                  methodData.rates.push(detail.chance);
+                }
+              }
+
+              // Convert consolidated methods to final format
+              const validMethods = Array.from(methodMap.entries()).map(
+                ([method, data]) => {
+                  const sortedLevels = Array.from(data.levels).sort(
+                    (a, b) => a - b
+                  );
+                  const levels =
+                    sortedLevels.length === 1
+                      ? sortedLevels[0].toString()
+                      : `${sortedLevels[0]}-${
+                          sortedLevels[sortedLevels.length - 1]
+                        }`;
+
+                  // Sum up encounter rates
+                  const totalRate = data.rates.reduce(
+                    (sum, rate) => sum + rate,
+                    0
+                  );
+                  const rate = `${Math.min(totalRate, 100)}%`; // Cap at 100%
+
+                  return { method, levels, rate };
+                }
+              );
+
+              // Only add Pokemon if it has valid encounters for this game/time
+              if (validMethods.length > 0) {
+                if (!pokemonMap.has(pokemonName)) {
+                  pokemonMap.set(pokemonName, {
+                    pokemon: pokemonName,
+                    methods: [],
+                  });
+                }
+
+                const pokemon = pokemonMap.get(pokemonName)!;
+                pokemon.methods.push(...validMethods);
+              }
+            }
+          }
+        }
+      }
+
+      return {
+        name: formatLocationName(locationName),
+        pokemon: Array.from(pokemonMap.values())
+          .filter((p) => p.methods.length > 0) // Only include Pokemon with valid encounters
+          .sort((a, b) => a.pokemon.localeCompare(b.pokemon)),
+      };
+    } catch (error) {
+      console.error('Error fetching location Pokemon:', error);
+      return null;
     }
   };
 
@@ -719,6 +1423,9 @@ const PokemonLocator: React.FC = () => {
       headbutt: 'Headbutt',
       gift: 'Gift',
       'only-one': 'Only One',
+      radio: 'Radio',
+      'poke-radar': 'Poké Radar',
+      'honey-tree': 'Honey Tree',
     };
     return (
       methodMap[method] || method.charAt(0).toUpperCase() + method.slice(1)
@@ -887,6 +1594,173 @@ const PokemonLocator: React.FC = () => {
     [searchTerm, fetchPokemonData]
   );
 
+  // Handle location selection
+  const handleLocationSelect = async (locationName: string) => {
+    if (!locationName) {
+      setLocationData(null);
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    const data = await fetchLocationPokemon(
+      locationName,
+      selectedGame,
+      selectedTime
+    );
+    setLocationData(data);
+    setLoading(false);
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setFilterText('');
+    setFilterLevel('');
+    setFilterMethod('');
+  };
+
+  // Filter function for results
+  const filterResults = (items: any[]) => {
+    return items.filter((item) => {
+      // Text filter (Pokemon name or location name)
+      const nameMatch =
+        filterText === '' ||
+        (item.pokemon &&
+          item.pokemon.toLowerCase().includes(filterText.toLowerCase())) ||
+        (item.location &&
+          item.location.toLowerCase().includes(filterText.toLowerCase()));
+
+      // Level filter
+      const levelMatch =
+        filterLevel === '' ||
+        (item.methods &&
+          item.methods.some((method: any) => {
+            const levels = method.levels.toString();
+            return (
+              levels.includes(filterLevel) ||
+              (levels.includes('-') &&
+                parseInt(filterLevel) >= parseInt(levels.split('-')[0]) &&
+                parseInt(filterLevel) <= parseInt(levels.split('-')[1]))
+            );
+          })) ||
+        (item.levels &&
+          (item.levels.includes(filterLevel) ||
+            (item.levels.includes('-') &&
+              parseInt(filterLevel) >= parseInt(item.levels.split('-')[0]) &&
+              parseInt(filterLevel) <= parseInt(item.levels.split('-')[1]))));
+
+      // Method filter
+      const methodMatch =
+        filterMethod === '' ||
+        (item.methods &&
+          item.methods.some((method: any) =>
+            method.method.toLowerCase().includes(filterMethod.toLowerCase())
+          )) ||
+        (item.method &&
+          item.method.toLowerCase().includes(filterMethod.toLowerCase()));
+
+      return nameMatch && levelMatch && methodMatch;
+    });
+  };
+
+  // Get unique methods for filter dropdown
+  const getUniqueMethods = () => {
+    const methods = new Set<string>();
+
+    if (pokemonData?.locations) {
+      pokemonData.locations.forEach((location) => {
+        methods.add(location.method);
+      });
+    }
+
+    if (locationData?.pokemon) {
+      locationData.pokemon.forEach((pokemon) => {
+        pokemon.methods.forEach((method) => {
+          methods.add(method.method);
+        });
+      });
+    }
+
+    return Array.from(methods).sort();
+  };
+
+  // Filter functions
+  const matchesLevelFilter = (levelRange: string, filterValue: string) => {
+    if (!filterValue.trim()) return true;
+
+    const filter = filterValue.trim();
+
+    // Parse level range (e.g., "15-20" or "25")
+    const [minStr, maxStr] = levelRange.split('-').map((s) => s.trim());
+    const minLevel = parseInt(minStr);
+    const maxLevel = maxStr ? parseInt(maxStr) : minLevel;
+
+    if (filter.includes('-')) {
+      // Range filter like "10-20"
+      const [filterMin, filterMax] = filter
+        .split('-')
+        .map((s) => parseInt(s.trim()));
+      return maxLevel >= filterMin && minLevel <= filterMax;
+    } else {
+      // Exact level filter like "15"
+      const exactLevel = parseInt(filter);
+      return exactLevel >= minLevel && exactLevel <= maxLevel;
+    }
+  };
+
+  const filterLocationResults = (locations: any[]) => {
+    return locations.filter((location) => {
+      // Text filter
+      if (
+        filterText &&
+        !location.location.toLowerCase().includes(filterText.toLowerCase())
+      ) {
+        return false;
+      }
+
+      // Level filter
+      if (filterLevel && !matchesLevelFilter(location.levels, filterLevel)) {
+        return false;
+      }
+
+      // Method filter
+      if (filterMethod && location.method !== filterMethod) {
+        return false;
+      }
+
+      return true;
+    });
+  };
+
+  const filterPokemonResults = (pokemon: any[]) => {
+    return pokemon.filter((poke) => {
+      // Text filter
+      if (
+        filterText &&
+        !poke.pokemon.toLowerCase().includes(filterText.toLowerCase())
+      ) {
+        return false;
+      }
+
+      // Check if any method matches the filters
+      const hasMatchingMethod = poke.methods.some((method: any) => {
+        // Level filter
+        if (filterLevel && !matchesLevelFilter(method.levels, filterLevel)) {
+          return false;
+        }
+
+        // Method filter
+        if (filterMethod && method.method !== filterMethod) {
+          return false;
+        }
+
+        return true;
+      });
+
+      return hasMatchingMethod;
+    });
+  };
+
   return (
     <>
       <Helmet>
@@ -959,6 +1833,24 @@ const PokemonLocator: React.FC = () => {
         <SearchContainer role='search' aria-label='Pokemon search form'>
           <FilterRow>
             <SelectContainer>
+              <SelectLabel htmlFor='mode-select'>Search Mode</SelectLabel>
+              <Select
+                id='mode-select'
+                value={browsingMode}
+                onChange={(e) => {
+                  setBrowsingMode(e.target.value as 'pokemon' | 'location');
+                  setPokemonData(null);
+                  setLocationData(null);
+                  setError('');
+                }}
+                aria-label='Select search mode'
+              >
+                <option value='pokemon'>Search Pokemon</option>
+                <option value='location'>Browse Locations</option>
+              </Select>
+            </SelectContainer>
+
+            <SelectContainer>
               <SelectLabel htmlFor='game-select'>Game Version</SelectLabel>
               <Select
                 id='game-select'
@@ -989,24 +1881,49 @@ const PokemonLocator: React.FC = () => {
                 ))}
               </Select>
             </SelectContainer>
+
+            {browsingMode === 'location' && (
+              <SelectContainer>
+                <SelectLabel htmlFor='location-select'>Location</SelectLabel>
+                <Select
+                  id='location-select'
+                  value={selectedLocation}
+                  onChange={(e) => {
+                    setSelectedLocation(e.target.value);
+                    handleLocationSelect(e.target.value);
+                  }}
+                  aria-label='Select location to browse'
+                  disabled={loading || availableLocations.length === 0}
+                >
+                  <option value=''>Choose a location...</option>
+                  {availableLocations.map((location) => (
+                    <option key={location} value={location}>
+                      {formatLocationName(location)}
+                    </option>
+                  ))}
+                </Select>
+              </SelectContainer>
+            )}
           </FilterRow>
 
-          <SearchForm onSubmit={handleSearch} role='form'>
-            <SearchInput
-              type='text'
-              placeholder='Enter Pokemon name (e.g., Pikachu, Geodude, Magikarp)'
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              aria-label='Enter Pokemon name to search'
-              autoComplete='off'
-            />
-            <SearchButton
-              type='submit'
-              disabled={loading || !searchTerm.trim()}
-            >
-              {loading ? <LoadingSpinner /> : 'Search'}
-            </SearchButton>
-          </SearchForm>
+          {browsingMode === 'pokemon' && (
+            <SearchForm onSubmit={handleSearch} role='form'>
+              <SearchInput
+                type='text'
+                placeholder='Enter Pokemon name (e.g., Pikachu, Geodude, Magikarp)'
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                aria-label='Enter Pokemon name to search'
+                autoComplete='off'
+              />
+              <SearchButton
+                type='submit'
+                disabled={loading || !searchTerm.trim()}
+              >
+                {loading ? <LoadingSpinner /> : 'Search'}
+              </SearchButton>
+            </SearchForm>
+          )}
 
           {error && <ErrorMessage>{error}</ErrorMessage>}
 
@@ -1058,7 +1975,7 @@ const PokemonLocator: React.FC = () => {
         </SearchContainer>
 
         <ResultsContainer role='main' aria-live='polite'>
-          {pokemonData && (
+          {browsingMode === 'pokemon' && pokemonData && (
             <PokemonCard>
               {isFromCache && (
                 <CacheIndicator>
@@ -1069,34 +1986,156 @@ const PokemonLocator: React.FC = () => {
                 {pokemonData.pokemon} in {pokemonData.version}
                 {pokemonData.timeOfDay && ` (${pokemonData.timeOfDay})`}
               </PokemonName>
+
+              {/* Filters for Pokemon locations */}
+              <FiltersContainer>
+                <FilterGrid>
+                  <FilterInput
+                    type='text'
+                    placeholder='Filter locations...'
+                    value={filterText}
+                    onChange={(e) => setFilterText(e.target.value)}
+                  />
+                  <FilterInput
+                    type='text'
+                    placeholder='Filter by level (e.g., 5, 10-15)'
+                    value={filterLevel}
+                    onChange={(e) => setFilterLevel(e.target.value)}
+                  />
+                  <FilterInput
+                    as='select'
+                    value={filterMethod}
+                    onChange={(e) => setFilterMethod(e.target.value)}
+                  >
+                    <option value=''>All methods</option>
+                    {getUniqueMethods().map((method) => (
+                      <option key={method} value={method}>
+                        {method}
+                      </option>
+                    ))}
+                  </FilterInput>
+                  {(filterText || filterLevel || filterMethod) && (
+                    <ClearFiltersButton onClick={clearFilters}>
+                      Clear Filters
+                    </ClearFiltersButton>
+                  )}
+                </FilterGrid>
+              </FiltersContainer>
+
               <LocationGrid
                 role='list'
                 aria-label='Pokemon encounter locations'
               >
-                {pokemonData.locations.map((location, index) => (
-                  <LocationCard key={index} role='listitem'>
-                    <LocationInfo>
-                      <LocationTitle>{location.location}</LocationTitle>
-                    </LocationInfo>
-                    <LocationDetails>
-                      <strong>Method:</strong> {location.method}
-                    </LocationDetails>
-                    <LocationDetails>
-                      <strong>Level:</strong> {location.levels}
-                    </LocationDetails>
-                    <LocationDetails>
-                      <strong>Encounter Rate:</strong> {location.rate}
-                    </LocationDetails>
-                  </LocationCard>
-                ))}
+                {filterLocationResults(pokemonData.locations).map(
+                  (location, index) => (
+                    <LocationCard key={index} role='listitem'>
+                      <LocationInfo>
+                        <LocationTitle>{location.location}</LocationTitle>
+                      </LocationInfo>
+                      <LocationDetails>
+                        <strong>Method:</strong> {location.method}
+                      </LocationDetails>
+                      <LocationDetails>
+                        <strong>Level:</strong> {location.levels}
+                      </LocationDetails>
+                      <LocationDetails>
+                        <strong>Encounter Rate:</strong> {location.rate}
+                      </LocationDetails>
+                    </LocationCard>
+                  )
+                )}
               </LocationGrid>
+
+              {filterLocationResults(pokemonData.locations).length === 0 && (
+                <NoResults>
+                  {filterText || filterLevel || filterMethod
+                    ? 'No locations match your current filters. Try adjusting or clearing the filters.'
+                    : 'No encounter locations found for this Pokemon.'}
+                </NoResults>
+              )}
             </PokemonCard>
           )}
 
-          {!loading && !pokemonData && !error && (
+          {browsingMode === 'location' && locationData && (
+            <LocationCard>
+              <LocationCardTitle>{locationData.name}</LocationCardTitle>
+
+              {/* Filters for Location Pokemon */}
+              <FiltersContainer>
+                <FilterGrid>
+                  <FilterInput
+                    type='text'
+                    placeholder='Filter Pokemon...'
+                    value={filterText}
+                    onChange={(e) => setFilterText(e.target.value)}
+                  />
+                  <FilterInput
+                    type='text'
+                    placeholder='Filter by level (e.g., 5, 10-15)'
+                    value={filterLevel}
+                    onChange={(e) => setFilterLevel(e.target.value)}
+                  />
+                  <FilterInput
+                    as='select'
+                    value={filterMethod}
+                    onChange={(e) => setFilterMethod(e.target.value)}
+                  >
+                    <option value=''>All methods</option>
+                    {getUniqueMethods().map((method) => (
+                      <option key={method} value={method}>
+                        {method}
+                      </option>
+                    ))}
+                  </FilterInput>
+                  {(filterText || filterLevel || filterMethod) && (
+                    <ClearFiltersButton onClick={clearFilters}>
+                      Clear Filters
+                    </ClearFiltersButton>
+                  )}
+                </FilterGrid>
+              </FiltersContainer>
+
+              <PokemonGrid>
+                {filterPokemonResults(locationData.pokemon).map(
+                  (pokemon, index) => (
+                    <LocationPokemonCard key={index}>
+                      <LocationPokemonName>
+                        {pokemon.pokemon}
+                      </LocationPokemonName>
+                      <MethodList>
+                        {pokemon.methods.map((method, methodIndex) => (
+                          <MethodItem key={methodIndex}>
+                            <MethodName>{method.method}</MethodName>
+                            <MethodDetail>
+                              <span>Level: {method.levels}</span>
+                              <span>Rate: {method.rate}</span>
+                            </MethodDetail>
+                          </MethodItem>
+                        ))}
+                      </MethodList>
+                    </LocationPokemonCard>
+                  )
+                )}
+              </PokemonGrid>
+
+              {filterPokemonResults(locationData.pokemon).length === 0 && (
+                <NoResults>
+                  {filterText || filterLevel || filterMethod
+                    ? 'No Pokemon match your current filters. Try adjusting or clearing the filters.'
+                    : `No Pokemon encounters found in this location for ${
+                        gameVersions.find((g) => g.value === selectedGame)
+                          ?.label || selectedGame
+                      }.`}
+                </NoResults>
+              )}
+            </LocationCard>
+          )}
+
+          {!loading && !pokemonData && !locationData && !error && (
             <NoResults>
-              Select a game version and search for a Pokemon to find its
-              locations!
+              {browsingMode === 'pokemon'
+                ? 'Select a game version and search for a Pokemon to find its locations!'
+                : 'Select a game version and location to see available Pokemon!'}
             </NoResults>
           )}
         </ResultsContainer>
