@@ -262,7 +262,11 @@ const EvolutionButton = styled.button`
 `;
 
 const EvolutionLineContainer = styled.div`
-  background: linear-gradient(135deg, rgba(124, 77, 255, 0.2), rgba(0, 150, 136, 0.2));
+  background: linear-gradient(
+    135deg,
+    rgba(124, 77, 255, 0.2),
+    rgba(0, 150, 136, 0.2)
+  );
   border: 1px solid rgba(124, 77, 255, 0.3);
   border-radius: 15px;
   padding: 20px;
@@ -294,26 +298,31 @@ const EvolutionStage = styled.div`
 `;
 
 const PokemonStage = styled.div<{ isCurrentPokemon?: boolean }>`
-  background: ${props => props.isCurrentPokemon ? 
-    'linear-gradient(135deg, #4CAF50, #45A049)' : 
-    'rgba(255, 255, 255, 0.1)'};
-  border: 2px solid ${props => props.isCurrentPokemon ? '#4CAF50' : 'rgba(255, 255, 255, 0.2)'};
+  background: ${(props) =>
+    props.isCurrentPokemon
+      ? 'linear-gradient(135deg, #4CAF50, #45A049)'
+      : 'rgba(255, 255, 255, 0.1)'};
+  border: 2px solid
+    ${(props) =>
+      props.isCurrentPokemon ? '#4CAF50' : 'rgba(255, 255, 255, 0.2)'};
   color: white;
   padding: 12px 16px;
   border-radius: 25px;
-  font-weight: ${props => props.isCurrentPokemon ? 'bold' : 'normal'};
+  font-weight: ${(props) => (props.isCurrentPokemon ? 'bold' : 'normal')};
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: ${props => props.isCurrentPokemon ? 
-    '0 4px 15px rgba(76, 175, 80, 0.3)' : 
-    '0 2px 8px rgba(0, 0, 0, 0.1)'};
+  box-shadow: ${(props) =>
+    props.isCurrentPokemon
+      ? '0 4px 15px rgba(76, 175, 80, 0.3)'
+      : '0 2px 8px rgba(0, 0, 0, 0.1)'};
 
   &:hover {
     transform: translateY(-2px);
-    background: ${props => props.isCurrentPokemon ? 
-      'linear-gradient(135deg, #66BB6A, #4CAF50)' : 
-      'rgba(255, 255, 255, 0.15)'};
+    background: ${(props) =>
+      props.isCurrentPokemon
+        ? 'linear-gradient(135deg, #66BB6A, #4CAF50)'
+        : 'rgba(255, 255, 255, 0.15)'};
   }
 `;
 
@@ -1585,22 +1594,26 @@ const PokemonLocator: React.FC = () => {
       };
 
       // Helper to traverse the evolution tree and build stages
-      const buildEvolutionStages = (chain: EvolutionChainNode): EvolutionLineStage[] => {
+      const buildEvolutionStages = (
+        chain: EvolutionChainNode
+      ): EvolutionLineStage[] => {
         const stages: EvolutionLineStage[] = [];
-        
+
         // Add current stage
         stages.push({
-          name: chain.species.name
+          name: chain.species.name,
         });
 
         // Add evolved forms
         for (const evolution of chain.evolves_to) {
-          const condition = formatEvolutionCondition(evolution.evolution_details);
+          const condition = formatEvolutionCondition(
+            evolution.evolution_details
+          );
           stages.push({
             name: evolution.species.name,
-            evolutionCondition: condition
+            evolutionCondition: condition,
           });
-          
+
           // Recursively add further evolutions
           const furtherEvolutions = buildEvolutionStages(evolution);
           stages.push(...furtherEvolutions.slice(1)); // Skip the first stage as it's already added
@@ -1610,9 +1623,9 @@ const PokemonLocator: React.FC = () => {
       };
 
       const stages = buildEvolutionStages(evolutionData.chain);
-      
+
       return {
-        stages: stages
+        stages: stages,
       };
     } catch (error) {
       console.error('Error fetching full evolution line:', error);
@@ -1657,11 +1670,11 @@ const PokemonLocator: React.FC = () => {
         setPokemonData(cachedData);
         setIsFromCache(true);
         setLoading(false);
-        
+
         // Always fetch and display the full evolution line
         const evolutionLineData = await getFullEvolutionLine(pokemonName);
         setEvolutionLine(evolutionLineData);
-        
+
         return;
       }
 
@@ -2171,15 +2184,22 @@ const PokemonLocator: React.FC = () => {
                       <React.Fragment key={stage.name}>
                         <EvolutionStage>
                           <PokemonStage
-                            isCurrentPokemon={stage.name.toLowerCase() === pokemonData.pokemon.toLowerCase()}
+                            isCurrentPokemon={
+                              stage.name.toLowerCase() ===
+                              pokemonData.pokemon.toLowerCase()
+                            }
                             onClick={() => {
-                              if (stage.name.toLowerCase() !== pokemonData.pokemon.toLowerCase()) {
+                              if (
+                                stage.name.toLowerCase() !==
+                                pokemonData.pokemon.toLowerCase()
+                              ) {
                                 setSearchTerm(stage.name);
                                 fetchPokemonData(stage.name);
                               }
                             }}
                           >
-                            {stage.name.charAt(0).toUpperCase() + stage.name.slice(1)}
+                            {stage.name.charAt(0).toUpperCase() +
+                              stage.name.slice(1)}
                           </PokemonStage>
                           {stage.evolutionCondition && (
                             <EvolutionCondition>
