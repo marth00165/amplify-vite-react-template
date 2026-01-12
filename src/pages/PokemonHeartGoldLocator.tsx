@@ -53,6 +53,15 @@ interface EvolutionData {
   condition: string;
 }
 
+interface EvolutionLineStage {
+  name: string;
+  evolutionCondition?: string;
+}
+
+interface EvolutionLine {
+  stages: EvolutionLineStage[];
+}
+
 interface LocationPokemon {
   pokemon: string;
   methods: {
@@ -250,6 +259,84 @@ const EvolutionButton = styled.button`
     background: #45a049;
     transform: translateY(-1px);
   }
+`;
+
+const EvolutionLineContainer = styled.div`
+  background: linear-gradient(135deg, rgba(124, 77, 255, 0.2), rgba(0, 150, 136, 0.2));
+  border: 1px solid rgba(124, 77, 255, 0.3);
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+`;
+
+const EvolutionLineTitle = styled.h3`
+  color: #e1bee7;
+  margin: 0 0 15px 0;
+  text-align: center;
+  font-size: 1.2em;
+  font-weight: 600;
+`;
+
+const EvolutionStagesContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+`;
+
+const EvolutionStage = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 120px;
+`;
+
+const PokemonStage = styled.div<{ isCurrentPokemon?: boolean }>`
+  background: ${props => props.isCurrentPokemon ? 
+    'linear-gradient(135deg, #4CAF50, #45A049)' : 
+    'rgba(255, 255, 255, 0.1)'};
+  border: 2px solid ${props => props.isCurrentPokemon ? '#4CAF50' : 'rgba(255, 255, 255, 0.2)'};
+  color: white;
+  padding: 12px 16px;
+  border-radius: 25px;
+  font-weight: ${props => props.isCurrentPokemon ? 'bold' : 'normal'};
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: ${props => props.isCurrentPokemon ? 
+    '0 4px 15px rgba(76, 175, 80, 0.3)' : 
+    '0 2px 8px rgba(0, 0, 0, 0.1)'};
+
+  &:hover {
+    transform: translateY(-2px);
+    background: ${props => props.isCurrentPokemon ? 
+      'linear-gradient(135deg, #66BB6A, #4CAF50)' : 
+      'rgba(255, 255, 255, 0.15)'};
+  }
+`;
+
+const EvolutionArrow = styled.div`
+  color: #b39ddb;
+  font-size: 1.5em;
+  margin: 0 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  &::before {
+    content: '→';
+  }
+`;
+
+const EvolutionCondition = styled.div`
+  color: #e1bee7;
+  font-size: 0.85em;
+  text-align: center;
+  margin-top: 5px;
+  font-style: italic;
+  max-width: 100px;
 `;
 
 const SuggestionsContainer = styled.div`
@@ -509,6 +596,9 @@ const PokemonLocator: React.FC = () => {
   const [evolutionData, setEvolutionData] = useState<EvolutionData | null>(
     null
   );
+  const [evolutionLine, setEvolutionLine] = useState<EvolutionLine | null>(
+    null
+  );
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [availableLocations, setAvailableLocations] = useState<string[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>('');
@@ -671,6 +761,7 @@ const PokemonLocator: React.FC = () => {
   useEffect(() => {
     if (browsingMode === 'location') {
       setEvolutionData(null);
+      setEvolutionLine(null);
     }
   }, [browsingMode]);
 
@@ -1411,6 +1502,124 @@ const PokemonLocator: React.FC = () => {
     }
   };
 
+  // Function to get the full evolution line
+  const getFullEvolutionLine = async (
+    pokemonName: string
+  ): Promise<EvolutionLine | null> => {
+    try {
+      const speciesResponse = await fetch(
+        `https://pokeapi.co/api/v2/pokemon-species/${pokemonName.toLowerCase()}`
+      );
+      if (!speciesResponse.ok) return null;
+
+      const speciesData: PokemonSpecies = await speciesResponse.json();
+      const evolutionResponse = await fetch(speciesData.evolution_chain.url);
+      if (!evolutionResponse.ok) return null;
+
+      const evolutionData: EvolutionChain = await evolutionResponse.json();
+
+      // Helper to format evolution conditions
+      const formatEvolutionCondition = (details: EvolutionDetail[]): string => {
+        if (!details || details.length === 0) return '';
+
+        const detail = details[0]; // Take the first evolution detail
+        const conditions: string[] = [];
+
+        // Base trigger condition
+        if (detail.min_level) {
+          conditions.push(`Lv.${detail.min_level}`);
+        } else if (detail.trigger.name === 'level-up') {
+          conditions.push('Level up');
+        } else if (detail.trigger.name === 'trade') {
+          conditions.push('Trade');
+        } else if (detail.trigger.name === 'use-item') {
+          conditions.push('Use item');
+        }
+
+        // Additional conditions
+        if (detail.time_of_day) {
+          conditions.push(detail.time_of_day);
+        }
+
+        if (detail.held_item) {
+          const itemName = detail.held_item.name
+            .split('-')
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+          conditions.push(`Hold ${itemName}`);
+        }
+
+        if (detail.item) {
+          const itemName = detail.item.name
+            .split('-')
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+          conditions.push(itemName);
+        }
+
+        if (detail.min_happiness) {
+          conditions.push('High friendship');
+        }
+
+        if (detail.min_affection) {
+          conditions.push('High affection');
+        }
+
+        if (detail.known_move) {
+          const moveName = detail.known_move.name
+            .split('-')
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+          conditions.push(`Know ${moveName}`);
+        }
+
+        if (detail.location) {
+          const locationName = detail.location.name
+            .split('-')
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+          conditions.push(`At ${locationName}`);
+        }
+
+        return conditions.join(' + ');
+      };
+
+      // Helper to traverse the evolution tree and build stages
+      const buildEvolutionStages = (chain: EvolutionChainNode): EvolutionLineStage[] => {
+        const stages: EvolutionLineStage[] = [];
+        
+        // Add current stage
+        stages.push({
+          name: chain.species.name
+        });
+
+        // Add evolved forms
+        for (const evolution of chain.evolves_to) {
+          const condition = formatEvolutionCondition(evolution.evolution_details);
+          stages.push({
+            name: evolution.species.name,
+            evolutionCondition: condition
+          });
+          
+          // Recursively add further evolutions
+          const furtherEvolutions = buildEvolutionStages(evolution);
+          stages.push(...furtherEvolutions.slice(1)); // Skip the first stage as it's already added
+        }
+
+        return stages;
+      };
+
+      const stages = buildEvolutionStages(evolutionData.chain);
+      
+      return {
+        stages: stages
+      };
+    } catch (error) {
+      console.error('Error fetching full evolution line:', error);
+      return null;
+    }
+  };
+
   // Helper function to format method names
   const formatMethodName = (method: string): string => {
     const methodMap: { [key: string]: string } = {
@@ -1439,6 +1648,7 @@ const PokemonLocator: React.FC = () => {
       setError('');
       setPokemonData(null);
       setEvolutionData(null); // Reset evolution suggestion
+      setEvolutionLine(null); // Reset evolution line
       setSuggestions([]); // Reset suggestions
 
       // Check cache first
@@ -1447,6 +1657,11 @@ const PokemonLocator: React.FC = () => {
         setPokemonData(cachedData);
         setIsFromCache(true);
         setLoading(false);
+        
+        // Always fetch and display the full evolution line
+        const evolutionLineData = await getFullEvolutionLine(pokemonName);
+        setEvolutionLine(evolutionLineData);
+        
         return;
       }
 
@@ -1552,6 +1767,10 @@ const PokemonLocator: React.FC = () => {
         setCachedData(pokemonName, selectedGame, selectedTime, result);
         setPokemonData(result);
         setIsFromCache(false);
+
+        // Always fetch and display the full evolution line
+        const evolutionLineData = await getFullEvolutionLine(pokemonName);
+        setEvolutionLine(evolutionLineData);
 
         // Check if we have limited/no data and suggest pre-evolution
         if (gameLocations.length === 0 || gameLocations.length < 3) {
@@ -1942,6 +2161,40 @@ const PokemonLocator: React.FC = () => {
                 {pokemonData.pokemon} in {pokemonData.version}
                 {pokemonData.timeOfDay && ` (${pokemonData.timeOfDay})`}
               </PokemonName>
+
+              {/* Evolution Line Display */}
+              {evolutionLine && evolutionLine.stages.length > 1 && (
+                <EvolutionLineContainer>
+                  <EvolutionLineTitle>Evolution Line</EvolutionLineTitle>
+                  <EvolutionStagesContainer>
+                    {evolutionLine.stages.map((stage, index) => (
+                      <React.Fragment key={stage.name}>
+                        <EvolutionStage>
+                          <PokemonStage
+                            isCurrentPokemon={stage.name.toLowerCase() === pokemonData.pokemon.toLowerCase()}
+                            onClick={() => {
+                              if (stage.name.toLowerCase() !== pokemonData.pokemon.toLowerCase()) {
+                                setSearchTerm(stage.name);
+                                fetchPokemonData(stage.name);
+                              }
+                            }}
+                          >
+                            {stage.name.charAt(0).toUpperCase() + stage.name.slice(1)}
+                          </PokemonStage>
+                          {stage.evolutionCondition && (
+                            <EvolutionCondition>
+                              {stage.evolutionCondition}
+                            </EvolutionCondition>
+                          )}
+                        </EvolutionStage>
+                        {index < evolutionLine.stages.length - 1 && (
+                          <EvolutionArrow />
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </EvolutionStagesContainer>
+                </EvolutionLineContainer>
+              )}
 
               {/* Filters for Pokemon locations */}
               <FiltersContainer>
