@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { AiOutlineInfo } from 'react-icons/ai';
-import { RxCross2 } from 'react-icons/rx';
 import {
   Card,
   Button,
@@ -70,6 +69,25 @@ const CardFooter = styled.div`
   border-top: 1px solid ${foodChallengeTheme.colors.border};
 `;
 
+const ExpandableActionsSection = styled.div<{ isExpanded: boolean }>`
+  max-height: ${(props) => (props.isExpanded ? '200px' : '0')};
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+  border-top: ${(props) =>
+    props.isExpanded
+      ? `1px solid ${foodChallengeTheme.colors.border}`
+      : 'none'};
+  background: ${foodChallengeTheme.colors.white};
+`;
+
+const ActionButtonsContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${foodChallengeTheme.spacing.sm};
+  padding: ${foodChallengeTheme.spacing.lg};
+  width: 100%;
+`;
+
 const TrackerHeader = styled.div`
   display: flex;
   justify-content: space-between;
@@ -91,54 +109,6 @@ const TrackerName = styled.h3`
   line-height: 1.3;
   flex: 1;
   margin-right: ${foodChallengeTheme.spacing.md};
-`;
-
-const FloatingActionBar = styled.div`
-  position: fixed;
-  bottom: ${foodChallengeTheme.spacing.lg};
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: ${foodChallengeTheme.spacing.md};
-  align-items: center;
-  padding: ${foodChallengeTheme.spacing.md} ${foodChallengeTheme.spacing.lg};
-  background: ${foodChallengeTheme.colors.white};
-  border-radius: 28px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(8px);
-  z-index: 10;
-  animation: slideUp 0.3s ease-out;
-
-  @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateX(-50%) translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
-  }
-
-  @media (max-width: 480px) {
-    flex-direction: column;
-    bottom: ${foodChallengeTheme.spacing.md};
-    left: ${foodChallengeTheme.spacing.md};
-    right: ${foodChallengeTheme.spacing.md};
-    transform: none;
-
-    @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-  }
 `;
 
 const InfoIconButton = styled.button`
@@ -165,32 +135,6 @@ const InfoIconButton = styled.button`
 
   &:active {
     transform: scale(0.95);
-  }
-`;
-
-const CloseButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: none;
-  background: transparent;
-  color: ${foodChallengeTheme.colors.textSecondary};
-  cursor: pointer;
-  transition: all 0.2s ease;
-  padding: 0;
-  margin-left: ${foodChallengeTheme.spacing.sm};
-
-  &:hover {
-    background: ${foodChallengeTheme.colors.primary};
-    color: ${foodChallengeTheme.colors.white};
-    transform: scale(1.15);
-  }
-
-  &:active {
-    transform: scale(0.9);
   }
 `;
 
@@ -473,11 +417,11 @@ export const TrackerCard: React.FC<TrackerCardProps> = ({
         </InfoIconButton>
       </CardFooter>
 
-      {showActions && (
-        <FloatingActionBar>
+      <ExpandableActionsSection isExpanded={showActions}>
+        <ActionButtonsContainer>
           {canLogFood && (
             <CompactButton
-              variant='primary'
+              variant='outline'
               onClick={() => onLogFood(tracker.id)}
             >
               Log Food
@@ -499,14 +443,8 @@ export const TrackerCard: React.FC<TrackerCardProps> = ({
           >
             Delete
           </CompactButton>
-          <CloseButton
-            onClick={() => setShowActions(false)}
-            title='Close actions'
-          >
-            <RxCross2 size={18} />
-          </CloseButton>
-        </FloatingActionBar>
-      )}
+        </ActionButtonsContainer>
+      </ExpandableActionsSection>
     </StyledCard>
   );
 };
