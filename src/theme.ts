@@ -127,5 +127,65 @@ export const styledTheme = {
 // Type definition for styled-components theme
 export type StyledTheme = typeof styledTheme;
 
+// Food Challenge theme - extends styledTheme with specific colors
+export const foodChallengeTheme = {
+  colors: {
+    primary: '#e30500', // Red
+    secondary: '#c15a09', // Orange
+    background: '#f2d59a', // Cream
+    white: '#ffffff',
+    text: '#333333',
+    textSecondary: '#666666',
+    error: '#dc3545',
+    success: '#28a745',
+  },
+  spacing: {
+    xs: '0.25rem',
+    sm: '0.5rem',
+    md: '1rem',
+    lg: '1.5rem',
+    xl: '2rem',
+    xxl: '3rem',
+  },
+  borderRadius: {
+    sm: '4px',
+    md: '6px',
+    lg: '8px',
+    xl: '12px',
+  },
+  typography: {
+    h1: {
+      fontSize: '2rem',
+      fontWeight: 700,
+      lineHeight: 1.2,
+    },
+    h2: {
+      fontSize: '1.5rem',
+      fontWeight: 700,
+      lineHeight: 1.2,
+    },
+    h3: {
+      fontSize: '1.25rem',
+      fontWeight: 600,
+      lineHeight: 1.2,
+    },
+    body: {
+      fontSize: '1rem',
+      fontWeight: 400,
+      lineHeight: 1.5,
+    },
+    caption: {
+      fontSize: '0.875rem',
+      fontWeight: 400,
+      lineHeight: 1.5,
+    },
+  },
+  shadows: {
+    sm: '0 1px 3px rgba(0, 0, 0, 0.1)',
+    md: '0 2px 8px rgba(0, 0, 0, 0.1)',
+    lg: '0 4px 12px rgba(0, 0, 0, 0.15)',
+  },
+};
+
 // For backwards compatibility, export the amplify theme as default
 export const theme = amplifyTheme;

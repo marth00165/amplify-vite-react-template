@@ -129,11 +129,19 @@ export default function Landing() {
       color: '#3a7ca5',
     },
     {
+      path: '/foodChallenge',
+      title: 'Food Challenge Tracker',
+      description:
+        'Track your progress in food challenges using JSON-based unit conversions within time windows.',
+      icon: '🌭',
+      color: '#e30500',
+    },
+    {
       path: '/jobs',
       title: 'Job Tracker',
       description:
         'Track your job applications with a Kanban-style board and drag & drop functionality.',
-      icon: '�',
+      icon: '💼',
       color: '#2563eb',
     },
     {

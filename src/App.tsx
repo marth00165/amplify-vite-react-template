@@ -19,6 +19,7 @@ import VendingMachine from './pages/VendingMachine';
 import ReactCheatSheet from './pages/reactAnswersApp/ReactCheatSheet';
 import MightyCoders from './pages/MightyCoders';
 import PokemonLocator from './pages/PokemonHeartGoldLocator';
+import FoodChallengePage from './pages/FoodChallengePage';
 
 export default function App() {
   return (
@@ -52,6 +53,7 @@ export default function App() {
             <Route path='/profile' element={<ProfilePage />} />
             <Route path='/jobs' element={<JobTracker />} />
             <Route path='/mightyCoders' element={<MightyCoders />} />
+            <Route path='/foodChallenge' element={<FoodChallengePage />} />
           </Route>
 
           {/* Optional catch-all */}

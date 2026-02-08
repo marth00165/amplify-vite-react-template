@@ -1,0 +1,90 @@
+{
+  "name": "Hot Dog Challenge Dataset",
+  "baseUnit": "hot_dog_unit",
+  "items": [
+    {
+      "name": "Standard hot dog (baseline)",
+      "value": 1.0
+    },
+    {
+      "name": "Beef hot dog (Nathan's)",
+      "value": 1.1
+    },
+    {
+      "name": "Turkey hot dog",
+      "value": 1.0
+    },
+    {
+      "name": "Veggie hot dog",
+      "value": 1.0
+    },
+    {
+      "name": "Costco food court hot dog",
+      "value": 1.1
+    },
+    {
+      "name": "Cocktail mini hot dog / Lit'l Smokie",
+      "value": 0.25
+    },
+    {
+      "name": "Trader Joe's mini chicken sausage",
+      "value": 0.3
+    },
+    {
+      "name": "Breakfast sausage link",
+      "value": 0.35
+    },
+    {
+      "name": "Pig in a blanket (single)",
+      "value": 0.4
+    },
+    {
+      "name": "Corn dog",
+      "value": 1.7
+    },
+    {
+      "name": "Pretzel-wrapped hot dog",
+      "value": 2.5
+    },
+    {
+      "name": "Jumbo / quarter-pound hot dog",
+      "value": 2.5
+    },
+    {
+      "name": "Bratwurst (Johnsonville)",
+      "value": 2.0
+    },
+    {
+      "name": "Chicken sausage (Aidells)",
+      "value": 2.0
+    },
+    {
+      "name": "Polish kielbasa link",
+      "value": 2.2
+    },
+    {
+      "name": "Italian sausage (mild or hot)",
+      "value": 2.1
+    },
+    {
+      "name": "Andouille sausage",
+      "value": 2.3
+    },
+    {
+      "name": "Beyond Meat sausage",
+      "value": 2.2
+    },
+    {
+      "name": "Field Roast grain meat sausage",
+      "value": 2.0
+    },
+    {
+      "name": "Chorizo sausage link",
+      "value": 1.8
+    },
+    {
+      "name": "Breakfast sausage patty",
+      "value": 0.5
+    }
+  ]
+}

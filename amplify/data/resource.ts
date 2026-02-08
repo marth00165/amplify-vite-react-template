@@ -143,6 +143,80 @@ const schema = a.schema({
         .identityClaim('sub')
         .to(['create', 'read', 'update', 'delete']),
     ]),
+
+  // Food Challenge Models
+  FoodTracker: a
+    .model({
+      name: a.string().required(),
+      goal: a.float().required(),
+      startDate: a.string().required(),
+      endDate: a.string().required(),
+      datasetId: a.string().required(),
+      isActive: a.boolean().default(true),
+      createdAt: a.string(),
+      updatedAt: a.string(),
+      dataset: a.belongsTo('FoodDataset', 'datasetId'),
+      consumptionLogs: a.hasMany('ConsumptionLog', 'trackerId'),
+    })
+    .authorization((allow) => [
+      allow
+        .owner()
+        .identityClaim('sub')
+        .to(['create', 'read', 'update', 'delete']),
+    ]),
+
+  FoodDataset: a
+    .model({
+      name: a.string().required(),
+      baseUnit: a.string().required(),
+      isDefault: a.boolean().default(false),
+      createdAt: a.string(),
+      foodItems: a.hasMany('FoodItem', 'datasetId'),
+      trackers: a.hasMany('FoodTracker', 'datasetId'),
+    })
+    .authorization((allow) => [
+      allow
+        .owner()
+        .identityClaim('sub')
+        .to(['create', 'read', 'update', 'delete']),
+      allow.publicApiKey().to(['read']),
+    ]),
+
+  FoodItem: a
+    .model({
+      name: a.string().required(),
+      conversions: a.json().required(),
+      datasetId: a.string().required(),
+      createdAt: a.string(),
+      dataset: a.belongsTo('FoodDataset', 'datasetId'),
+      consumptionLogs: a.hasMany('ConsumptionLog', 'foodItemId'),
+    })
+    .authorization((allow) => [
+      allow
+        .owner()
+        .identityClaim('sub')
+        .to(['create', 'read', 'update', 'delete']),
+      allow.publicApiKey().to(['read']),
+    ]),
+
+  ConsumptionLog: a
+    .model({
+      trackerId: a.string().required(),
+      foodItemId: a.string().required(),
+      quantity: a.float().required(),
+      unit: a.string().required(),
+      consumedAt: a.string().required(),
+      notes: a.string(),
+      createdAt: a.string(),
+      tracker: a.belongsTo('FoodTracker', 'trackerId'),
+      foodItem: a.belongsTo('FoodItem', 'foodItemId'),
+    })
+    .authorization((allow) => [
+      allow
+        .owner()
+        .identityClaim('sub')
+        .to(['create', 'read', 'update', 'delete']),
+    ]),
 });
 
 export type Schema = ClientSchema<typeof schema>;

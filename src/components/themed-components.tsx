@@ -51,3 +51,10 @@ export const Field = styled.div`
     border-radius: 4px;
   }
 `;
+
+export const Card = styled.div`
+  background: white;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+`;
