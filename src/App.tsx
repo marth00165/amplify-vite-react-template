@@ -22,6 +22,7 @@ import PokemonLocator from './pages/PokemonHeartGoldLocator';
 import FoodChallengePage from './pages/FoodChallengePage';
 import { FindTrackers } from './pages/FindTrackers';
 import { FollowingPage } from './pages/FollowingPage';
+import TrackerPublicPage from './pages/TrackerPublicPage';
 
 export default function App() {
   return (
@@ -42,6 +43,10 @@ export default function App() {
           <Route path='/reactCheatSheet' element={<ReactCheatSheet />} />
           <Route path='/pokemonHeartGold' element={<PokemonLocator />} />
           <Route path='/findTrackers' element={<FindTrackers />} />
+          <Route
+            path='/foodChallenge/tracker/:trackerId'
+            element={<TrackerPublicPage />}
+          />
 
           {/* Protected routes with Navbar */}
           <Route
