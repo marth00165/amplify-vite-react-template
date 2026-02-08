@@ -352,3 +352,89 @@ export const getPublicTrackers = async (params?: {
     throw error;
   }
 };
+
+// Public version of getTrackerById that works with unauthenticated users
+export const getTrackerByIdPublic = async (
+  trackerId: string,
+): Promise<SimpleTracker | null> => {
+  try {
+    // Use the public API key for unauthenticated access
+    const publicClient = generateClient<Schema>({
+      authMode: 'apiKey',
+    });
+
+    const response = await publicClient.models.FoodTracker.get({
+      id: trackerId,
+    });
+
+    if (!response.data) {
+      return null;
+    }
+
+    const tracker = response.data;
+
+    // Fetch consumption logs for this tracker using public client
+    const logsResponse = await publicClient.models.ConsumptionLog.list({
+      filter: { trackerId: { eq: tracker.id } },
+    });
+
+    const logs = logsResponse.data || [];
+
+    const totalConsumed = logs.reduce((sum, log) => sum + log.quantity, 0);
+
+    const progressPercentage =
+      tracker.goal > 0
+        ? Math.min((totalConsumed / tracker.goal) * 100, 100)
+        : 0;
+
+    return {
+      ...tracker,
+      consumptionLogs: logs,
+      totalConsumed,
+      progressPercentage,
+    } as SimpleTracker;
+  } catch (error) {
+    console.error('Error fetching tracker by ID:', error);
+    return null;
+  }
+};
+
+export const getTrackerById = async (
+  trackerId: string,
+): Promise<SimpleTracker | null> => {
+  try {
+    const response = await client.models.FoodTracker.get({
+      id: trackerId,
+    });
+
+    if (!response.data) {
+      return null;
+    }
+
+    const tracker = response.data;
+
+    // Fetch consumption logs for this tracker
+    const logsResponse = await client.models.ConsumptionLog.list({
+      filter: { trackerId: { eq: tracker.id } },
+    });
+
+    const logs = logsResponse.data || [];
+
+    const totalConsumed = logs.reduce((sum, log) => sum + log.quantity, 0);
+
+    const progressPercentage =
+      tracker.goal > 0
+        ? Math.min((totalConsumed / tracker.goal) * 100, 100)
+        : 0;
+
+    return {
+      ...tracker,
+      consumptionLogs: logs,
+      totalConsumed,
+      progressPercentage,
+    } as SimpleTracker;
+  } catch (error) {
+    console.error('Error fetching tracker by ID:', error);
+    return null;
+  }
+};

@@ -232,6 +232,7 @@ const schema = a.schema({
         .owner()
         .identityClaim('sub')
         .to(['create', 'read', 'update', 'delete']),
+      allow.publicApiKey().to(['read']),
     ]),
 });
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { AiOutlineInfo } from 'react-icons/ai';
+import { MdShare } from 'react-icons/md';
 import {
   Card,
   Button,
@@ -21,6 +22,7 @@ interface TrackerCardProps {
   onViewDetails: (trackerId: string) => void;
   onDelete: (trackerId: string, trackerName: string) => void;
   onToggleVisibility?: (trackerId: string, currentVisibility: boolean) => void;
+  onShare: (trackerId: string) => void;
 }
 
 const StyledCard = styled(Card)`
@@ -251,6 +253,7 @@ export const TrackerCard: React.FC<TrackerCardProps> = ({
   onViewDetails,
   onDelete,
   onToggleVisibility,
+  onShare,
 }) => {
   const [showActions, setShowActions] = useState(false);
   const currentUnits = tracker.totalConsumed;
@@ -433,6 +436,21 @@ export const TrackerCard: React.FC<TrackerCardProps> = ({
           >
             View Details
           </CompactButton>
+          {tracker.isPublic && (
+            <CompactButton
+              variant='outline'
+              onClick={() => onShare(tracker.id)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: foodChallengeTheme.spacing.sm,
+              }}
+            >
+              <MdShare size={16} />
+              Share
+            </CompactButton>
+          )}
           <CompactButton
             variant='outline'
             onClick={() => onDelete(tracker.id, tracker.name)}

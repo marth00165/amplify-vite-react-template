@@ -5,6 +5,7 @@ import { CreateTrackerModalSimplified } from './CreateTrackerModalSimplified';
 import { TrackerCard } from './TrackerCard';
 import { FoodLoggingModalSimplified } from './FoodLoggingModalSimplified';
 import { TrackerDetailsModal } from './TrackerDetailsModal';
+import { ShareTrackerModal } from './ShareTrackerModal';
 import { foodChallengeTheme } from '../../utils/foodChallengeUtils';
 import {
   getUserTrackers,
@@ -73,6 +74,13 @@ export const TrackerDashboard: React.FC<TrackerDashboardProps> = () => {
     tracker: null,
   });
   const [detailsModal, setDetailsModal] = useState<{
+    isOpen: boolean;
+    tracker: SimpleTracker | null;
+  }>({
+    isOpen: false,
+    tracker: null,
+  });
+  const [shareModal, setShareModal] = useState<{
     isOpen: boolean;
     tracker: SimpleTracker | null;
   }>({
@@ -160,6 +168,13 @@ export const TrackerDashboard: React.FC<TrackerDashboardProps> = () => {
     const tracker = trackers.find((t) => t.id === trackerId);
     if (tracker) {
       setDetailsModal({ isOpen: true, tracker });
+    }
+  };
+
+  const handleShare = (trackerId: string) => {
+    const tracker = trackers.find((t) => t.id === trackerId);
+    if (tracker) {
+      setShareModal({ isOpen: true, tracker });
     }
   };
 
@@ -272,6 +287,7 @@ export const TrackerDashboard: React.FC<TrackerDashboardProps> = () => {
               onViewDetails={handleViewDetails}
               onDelete={handleDeleteTracker}
               onToggleVisibility={handleToggleVisibility}
+              onShare={handleShare}
             />
           ))}
         </TrackersGrid>
@@ -297,6 +313,14 @@ export const TrackerDashboard: React.FC<TrackerDashboardProps> = () => {
         tracker={detailsModal.tracker}
         onClose={() => setDetailsModal({ isOpen: false, tracker: null })}
       />
+
+      {shareModal.tracker && (
+        <ShareTrackerModal
+          trackerId={shareModal.tracker.id}
+          trackerName={shareModal.tracker.name}
+          onClose={() => setShareModal({ isOpen: false, tracker: null })}
+        />
+      )}
     </DashboardContainer>
   );
 };

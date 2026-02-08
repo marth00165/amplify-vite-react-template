@@ -150,6 +150,7 @@ export const FollowingPage: React.FC = () => {
               onLogFood={handleLogFood}
               onViewDetails={handleViewDetails}
               onDelete={handleDelete}
+              onShare={() => {}} // No share functionality needed in FollowingPage
             />
           ))}
         </TrackersGrid>
