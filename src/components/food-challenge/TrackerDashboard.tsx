@@ -4,6 +4,7 @@ import { Button, Card, EmptyState } from './BaseComponents';
 import { CreateTrackerModalSimplified } from './CreateTrackerModalSimplified';
 import { TrackerCard } from './TrackerCard';
 import { FoodLoggingModalSimplified } from './FoodLoggingModalSimplified';
+import { TrackerDetailsModal } from './TrackerDetailsModal';
 import { foodChallengeTheme } from '../../utils/foodChallengeUtils';
 import {
   getUserTrackers,
@@ -64,6 +65,13 @@ export const TrackerDashboard: React.FC<TrackerDashboardProps> = () => {
   const [error, setError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [foodLoggingModal, setFoodLoggingModal] = useState<{
+    isOpen: boolean;
+    tracker: SimpleTracker | null;
+  }>({
+    isOpen: false,
+    tracker: null,
+  });
+  const [detailsModal, setDetailsModal] = useState<{
     isOpen: boolean;
     tracker: SimpleTracker | null;
   }>({
@@ -148,8 +156,10 @@ export const TrackerDashboard: React.FC<TrackerDashboardProps> = () => {
   };
 
   const handleViewDetails = (trackerId: string) => {
-    // TODO: Implement tracker details view
-    console.log('View details for tracker:', trackerId);
+    const tracker = trackers.find((t) => t.id === trackerId);
+    if (tracker) {
+      setDetailsModal({ isOpen: true, tracker });
+    }
   };
 
   const handleDeleteTracker = async (
@@ -258,6 +268,12 @@ export const TrackerDashboard: React.FC<TrackerDashboardProps> = () => {
           onLogged={handleFoodLogged}
         />
       )}
+
+      <TrackerDetailsModal
+        isOpen={detailsModal.isOpen}
+        tracker={detailsModal.tracker}
+        onClose={() => setDetailsModal({ isOpen: false, tracker: null })}
+      />
     </DashboardContainer>
   );
 };
