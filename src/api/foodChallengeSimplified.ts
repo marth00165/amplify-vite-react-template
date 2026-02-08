@@ -14,6 +14,7 @@ export interface SimpleTracker {
   goal: number;
   startDate: string;
   endDate?: string;
+  isPublic?: boolean;
   consumptionLogs: Array<{
     id: string;
     quantity: number;
@@ -42,6 +43,7 @@ export const createTracker = async (trackerData: {
   goal: number;
   startDate: string;
   endDate?: string;
+  isPublic?: boolean;
 }): Promise<FoodTracker | null> => {
   try {
     const response = await client.models.FoodTracker.create({
@@ -51,6 +53,7 @@ export const createTracker = async (trackerData: {
       endDate: trackerData.endDate || '',
       datasetId: 'hotdog', // Static value since we load from JSON
       isActive: true,
+      isPublic: trackerData.isPublic || false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
@@ -126,6 +129,23 @@ export const deleteTracker = async (trackerId: string): Promise<void> => {
   }
 };
 
+export const updateTrackerVisibility = async (
+  trackerId: string,
+  isPublic: boolean,
+): Promise<boolean> => {
+  try {
+    const response = await client.models.FoodTracker.update({
+      id: trackerId,
+      isPublic: isPublic,
+      updatedAt: new Date().toISOString(),
+    });
+    return !!response.data;
+  } catch (error) {
+    console.error('Error updating tracker visibility:', error);
+    throw error;
+  }
+};
+
 // ============ CONSUMPTION LOG OPERATIONS ============
 
 export const createConsumptionLog = async (
@@ -165,6 +185,170 @@ export const deleteConsumptionLog = async (logId: string): Promise<void> => {
     await client.models.ConsumptionLog.delete({ id: logId });
   } catch (error) {
     console.error('Error deleting consumption log:', error);
+    throw error;
+  }
+};
+
+// ============ SOCIAL / FOLLOW OPERATIONS ============
+
+export const followTracker = async (trackerId: string): Promise<boolean> => {
+  try {
+    const response = await client.models.TrackerFollow.create({
+      trackerId,
+      userId: '', // Will be auto-filled by Amplify owner
+      createdAt: new Date().toISOString(),
+    });
+    return !!response.data;
+  } catch (error) {
+    console.error('Error following tracker:', error);
+    throw error;
+  }
+};
+
+export const unfollowTracker = async (followId: string): Promise<boolean> => {
+  try {
+    await client.models.TrackerFollow.delete({ id: followId });
+    return true;
+  } catch (error) {
+    console.error('Error unfollowing tracker:', error);
+    throw error;
+  }
+};
+
+export const getFollowedTrackers = async (): Promise<SimpleTracker[]> => {
+  try {
+    // Get all follows for current user
+    const followsResponse = await client.models.TrackerFollow.list();
+    const follows = followsResponse.data || [];
+
+    if (follows.length === 0) return [];
+
+    // Fetch each followed tracker with its data
+    const trackersWithData = await Promise.all(
+      follows.map(async (follow) => {
+        const trackerResponse = await client.models.FoodTracker.get({
+          id: follow.trackerId,
+        });
+
+        if (!trackerResponse.data) return null;
+
+        const tracker = trackerResponse.data;
+
+        // Fetch consumption logs
+        const logsResponse = await client.models.ConsumptionLog.list({
+          filter: { trackerId: { eq: tracker.id } },
+        });
+
+        const logs = logsResponse.data || [];
+
+        const totalConsumed = logs.reduce((sum, log) => sum + log.quantity, 0);
+
+        const progressPercentage =
+          tracker.goal > 0
+            ? Math.min((totalConsumed / tracker.goal) * 100, 100)
+            : 0;
+
+        return {
+          ...tracker,
+          consumptionLogs: logs,
+          totalConsumed,
+          progressPercentage,
+        } as SimpleTracker;
+      }),
+    );
+
+    return trackersWithData.filter((t) => t !== null) as SimpleTracker[];
+  } catch (error) {
+    console.error('Error fetching followed trackers:', error);
+    throw error;
+  }
+};
+
+export const isFollowingTracker = async (
+  trackerId: string,
+): Promise<{ isFollowing: boolean; followId?: string }> => {
+  try {
+    const followsResponse = await client.models.TrackerFollow.list({
+      filter: { trackerId: { eq: trackerId } },
+    });
+
+    const follows = followsResponse.data || [];
+    const follow = follows.find((f) => f.trackerId === trackerId);
+
+    return {
+      isFollowing: !!follow,
+      followId: follow?.id,
+    };
+  } catch (error) {
+    console.error('Error checking follow status:', error);
+    return { isFollowing: false };
+  }
+};
+
+export const getPublicTrackers = async (params?: {
+  searchQuery?: string;
+  sortBy?: 'progress' | 'goal' | 'timeRemaining';
+}): Promise<SimpleTracker[]> => {
+  try {
+    // Fetch all public trackers
+    const response = await client.models.FoodTracker.list({
+      filter: { isPublic: { eq: true } },
+    });
+
+    const trackers = response.data || [];
+
+    // Fetch consumption logs for each tracker
+    const trackersWithData = await Promise.all(
+      trackers.map(async (tracker) => {
+        const logsResponse = await client.models.ConsumptionLog.list({
+          filter: { trackerId: { eq: tracker.id } },
+        });
+
+        const logs = logsResponse.data || [];
+
+        const totalConsumed = logs.reduce((sum, log) => sum + log.quantity, 0);
+
+        const progressPercentage =
+          tracker.goal > 0
+            ? Math.min((totalConsumed / tracker.goal) * 100, 100)
+            : 0;
+
+        return {
+          ...tracker,
+          consumptionLogs: logs,
+          totalConsumed,
+          progressPercentage,
+        } as SimpleTracker;
+      }),
+    );
+
+    // Filter by search query if provided
+    let filtered = trackersWithData;
+    if (params?.searchQuery) {
+      const query = params.searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (t) =>
+          t.name.toLowerCase().includes(query) ||
+          (t as any).owner?.toLowerCase().includes(query),
+      );
+    }
+
+    // Sort by specified field
+    if (params?.sortBy === 'progress') {
+      filtered.sort((a, b) => b.progressPercentage - a.progressPercentage);
+    } else if (params?.sortBy === 'goal') {
+      filtered.sort((a, b) => b.goal - a.goal);
+    } else if (params?.sortBy === 'timeRemaining') {
+      filtered.sort((a, b) => {
+        const aEnd = new Date(a.endDate || 0).getTime();
+        const bEnd = new Date(b.endDate || 0).getTime();
+        return aEnd - bEnd;
+      });
+    }
+
+    return filtered;
+  } catch (error) {
+    console.error('Error fetching public trackers:', error);
     throw error;
   }
 };

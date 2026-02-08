@@ -153,16 +153,32 @@ const schema = a.schema({
       endDate: a.string().required(),
       datasetId: a.string().required(),
       isActive: a.boolean().default(true),
+      isPublic: a.boolean().default(false),
       createdAt: a.string(),
       updatedAt: a.string(),
       dataset: a.belongsTo('FoodDataset', 'datasetId'),
       consumptionLogs: a.hasMany('ConsumptionLog', 'trackerId'),
+      follows: a.hasMany('TrackerFollow', 'trackerId'),
     })
     .authorization((allow) => [
       allow
         .owner()
         .identityClaim('sub')
         .to(['create', 'read', 'update', 'delete']),
+      allow.publicApiKey().to(['read']),
+      allow.authenticated().to(['read']),
+    ]),
+
+  TrackerFollow: a
+    .model({
+      userId: a.string().required(),
+      trackerId: a.string().required(),
+      createdAt: a.string(),
+      tracker: a.belongsTo('FoodTracker', 'trackerId'),
+    })
+    .authorization((allow) => [
+      allow.owner().identityClaim('sub').to(['create', 'read', 'delete']),
+      allow.authenticated().to(['read']),
     ]),
 
   FoodDataset: a

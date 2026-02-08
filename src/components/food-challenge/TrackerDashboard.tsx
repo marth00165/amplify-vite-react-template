@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Button, Card, EmptyState } from './BaseComponents';
+import { Button, Card, EmptyState } from '../common';
 import { CreateTrackerModalSimplified } from './CreateTrackerModalSimplified';
 import { TrackerCard } from './TrackerCard';
 import { FoodLoggingModalSimplified } from './FoodLoggingModalSimplified';
@@ -9,6 +9,7 @@ import { foodChallengeTheme } from '../../utils/foodChallengeUtils';
 import {
   getUserTrackers,
   deleteTracker,
+  updateTrackerVisibility,
   type SimpleTracker,
 } from '../../api/foodChallengeSimplified';
 
@@ -187,6 +188,27 @@ export const TrackerDashboard: React.FC<TrackerDashboardProps> = () => {
     }
   };
 
+  const handleToggleVisibility = async (
+    trackerId: string,
+    currentVisibility: boolean,
+  ) => {
+    try {
+      // Optimistically update UI
+      setTrackers((prevTrackers) =>
+        prevTrackers.map((t) =>
+          t.id === trackerId ? { ...t, isPublic: !currentVisibility } : t,
+        ),
+      );
+
+      await updateTrackerVisibility(trackerId, !currentVisibility);
+    } catch (error) {
+      console.error('Error updating tracker visibility:', error);
+      setError('Failed to update visibility. Please try again.');
+      // Revert optimistic update by refreshing
+      await fetchTrackers();
+    }
+  };
+
   if (isLoading) {
     return (
       <DashboardContainer>
@@ -249,6 +271,7 @@ export const TrackerDashboard: React.FC<TrackerDashboardProps> = () => {
               onLogFood={handleLogFood}
               onViewDetails={handleViewDetails}
               onDelete={handleDeleteTracker}
+              onToggleVisibility={handleToggleVisibility}
             />
           ))}
         </TrackersGrid>

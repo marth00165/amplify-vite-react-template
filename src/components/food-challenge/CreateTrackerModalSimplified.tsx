@@ -95,6 +95,7 @@ export const CreateTrackerModalSimplified: React.FC<Props> = ({
     new Date().toISOString().split('T')[0],
   );
   const [endDate, setEndDate] = useState('');
+  const [isPublic, setIsPublic] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -130,6 +131,7 @@ export const CreateTrackerModalSimplified: React.FC<Props> = ({
         goal: parseFloat(goal),
         startDate,
         endDate: endDate || undefined,
+        isPublic,
       });
 
       if (!newTracker) {
@@ -157,6 +159,7 @@ export const CreateTrackerModalSimplified: React.FC<Props> = ({
       setGoal('21');
       setStartDate(new Date().toISOString().split('T')[0]);
       setEndDate('');
+      setIsPublic(false);
       handleClose();
     } catch (err) {
       console.error('Error creating tracker:', err);
@@ -231,6 +234,28 @@ export const CreateTrackerModalSimplified: React.FC<Props> = ({
                     onChange={(e) => setEndDate(e.target.value)}
                     disabled={isLoading}
                   />
+                </FormGroup>
+
+                <FormGroup>
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <input
+                      type='checkbox'
+                      checked={isPublic}
+                      onChange={(e) => setIsPublic(e.target.checked)}
+                      disabled={isLoading}
+                      style={{ width: 'auto' }}
+                    />
+                    <span style={{ fontSize: '0.95rem' }}>
+                      Make this tracker public (others can view and follow it)
+                    </span>
+                  </label>
                 </FormGroup>
 
                 <ButtonGroup>

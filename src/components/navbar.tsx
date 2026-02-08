@@ -7,6 +7,7 @@ import UserProfileModal from './profile/userProfileModal';
 import ProfileDropdown from './profile/ProfileDropdown';
 import { getWalletBalance } from '../api/transactions';
 import { useUser } from '../context/UserContext';
+import { getFollowedTrackers } from '../api/foodChallengeSimplified';
 
 const NavbarContainer = styled.nav`
   position: fixed;
@@ -107,6 +108,7 @@ export default function Navbar() {
   const [displayName, setDisplayName] = useState('User');
   const [email, setEmail] = useState('');
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [followedCount, setFollowedCount] = useState(0);
   const { signOut, user } = useAuthenticator();
   const { currentUser } = useUser();
 
@@ -145,10 +147,24 @@ export default function Navbar() {
     }
   }, [user]);
 
+  // Check followed trackers count
+  const checkFollowedCount = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const followed = await getFollowedTrackers();
+      setFollowedCount(followed.length);
+    } catch (error) {
+      console.error('Error fetching followed trackers:', error);
+      setFollowedCount(0);
+    }
+  }, [user]);
+
   useEffect(() => {
     loadUserAttributes();
     fetchWalletBalance();
-  }, [loadUserAttributes, fetchWalletBalance]);
+    checkFollowedCount();
+  }, [loadUserAttributes, fetchWalletBalance, checkFollowedCount]);
 
   const handleEditProfile = () => {
     setIsOpen(false);
@@ -174,6 +190,10 @@ export default function Navbar() {
               <NavLink to='/jobs'>Jobs</NavLink>
               <NavLink to='/timer'>Timer</NavLink>
               <NavLink to='/ticketPriceGenerator'>Fares</NavLink>
+              <NavLink to='/findTrackers'>Find Trackers</NavLink>
+              {followedCount > 0 && (
+                <NavLink to='/following'>Following</NavLink>
+              )}
             </NavLinks>
           )}
         </NavContent>

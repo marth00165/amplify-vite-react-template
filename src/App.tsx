@@ -20,6 +20,8 @@ import ReactCheatSheet from './pages/reactAnswersApp/ReactCheatSheet';
 import MightyCoders from './pages/MightyCoders';
 import PokemonLocator from './pages/PokemonHeartGoldLocator';
 import FoodChallengePage from './pages/FoodChallengePage';
+import { FindTrackers } from './pages/FindTrackers';
+import { FollowingPage } from './pages/FollowingPage';
 
 export default function App() {
   return (
@@ -39,6 +41,7 @@ export default function App() {
           <Route path='/vendingMachine' element={<VendingMachine />} />
           <Route path='/reactCheatSheet' element={<ReactCheatSheet />} />
           <Route path='/pokemonHeartGold' element={<PokemonLocator />} />
+          <Route path='/findTrackers' element={<FindTrackers />} />
 
           {/* Protected routes with Navbar */}
           <Route
@@ -54,6 +57,7 @@ export default function App() {
             <Route path='/jobs' element={<JobTracker />} />
             <Route path='/mightyCoders' element={<MightyCoders />} />
             <Route path='/foodChallenge' element={<FoodChallengePage />} />
+            <Route path='/following' element={<FollowingPage />} />
           </Route>
 
           {/* Optional catch-all */}
