@@ -23,6 +23,7 @@ import FoodChallengePage from './pages/FoodChallengePage';
 import { FindTrackers } from './pages/FindTrackers';
 import { FollowingPage } from './pages/FollowingPage';
 import TrackerPublicPage from './pages/TrackerPublicPage';
+import MarketCycleAnalyzer from './pages/MarketCycleAnalyzer';
 
 export default function App() {
   return (
@@ -43,6 +44,10 @@ export default function App() {
           <Route path='/reactCheatSheet' element={<ReactCheatSheet />} />
           <Route path='/pokemonHeartGold' element={<PokemonLocator />} />
           <Route path='/findTrackers' element={<FindTrackers />} />
+          <Route
+            path='/marketCycleAnalyzer'
+            element={<MarketCycleAnalyzer />}
+          />
           <Route
             path='/foodChallenge/tracker/:trackerId'
             element={<TrackerPublicPage />}

@@ -160,10 +160,18 @@ export default function Landing() {
       color: '#c7365f',
     },
     {
+      path: '/marketCycleAnalyzer',
+      title: 'Market Cycle Analyzer',
+      description:
+        'Upload or paste cycle JSON data to visualize market opportunities and filter results.',
+      icon: '📊',
+      color: '#16213e',
+    },
+    {
       path: '/dashboard',
       title: 'User Dashboard',
       description: 'Access your personalized dashboard (requires login).',
-      icon: '📊',
+      icon: '🏠',
       color: '#6a7a94',
     },
     {
