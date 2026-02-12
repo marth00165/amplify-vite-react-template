@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import styled from 'styled-components';
+import html2canvas from 'html2canvas';
 import { Button, Card } from '../components/themed-components';
 
 // Types based on the cycle JSON structure
@@ -364,11 +365,72 @@ const ToggleLabel = styled.label`
   color: #333;
 `;
 
+const ReportSection = styled.div`
+  /* This wrapper is used for screenshot capture */
+`;
+
+const DownloadButton = styled(Button)`
+  background: #28a745;
+
+  &:hover {
+    background: #218838;
+  }
+
+  &:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+  }
+`;
+
+const ReportHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+`;
+
+const ReportTitle = styled.h2`
+  color: white;
+  margin: 0;
+`;
+
 export default function MarketCycleAnalyzer() {
   const [jsonInput, setJsonInput] = useState('');
   const [cycleData, setCycleData] = useState<CycleData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showOnlyPassed, setShowOnlyPassed] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
+
+  const downloadScreenshot = useCallback(async () => {
+    if (!reportRef.current) return;
+
+    setIsCapturing(true);
+    try {
+      const canvas = await html2canvas(reportRef.current, {
+        backgroundColor: '#1a1a2e',
+        scale: 2, // Higher quality
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
+      });
+
+      const link = document.createElement('a');
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      link.download = `market-cycle-report-${
+        cycleData?.cycle ?? 'unknown'
+      }-${timestamp}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (err) {
+      console.error('Error capturing screenshot:', err);
+      setError('Failed to capture screenshot. Please try again.');
+    } finally {
+      setIsCapturing(false);
+    }
+  }, [cycleData?.cycle]);
 
   const parseJson = useCallback(() => {
     setError(null);
@@ -467,278 +529,300 @@ export default function MarketCycleAnalyzer() {
 
       {cycleData && (
         <>
-          {/* Summary Cards */}
-          <SummaryGrid>
-            <SummaryCard>
-              <SummaryTitle>🔄 Cycle Info</SummaryTitle>
-              <StatRow>
-                <StatLabel>Cycle Number</StatLabel>
-                <StatValue>{cycleData.cycle ?? 'N/A'}</StatValue>
-              </StatRow>
-              <StatRow>
-                <StatLabel>Started</StatLabel>
-                <StatValue>
-                  {cycleData.started_at
-                    ? formatDate(cycleData.started_at)
-                    : 'N/A'}
-                </StatValue>
-              </StatRow>
-              <StatRow>
-                <StatLabel>Finished</StatLabel>
-                <StatValue>
-                  {cycleData.finished_at
-                    ? formatDate(cycleData.finished_at)
-                    : 'N/A'}
-                </StatValue>
-              </StatRow>
-              <StatRow>
-                <StatLabel>Provider</StatLabel>
-                <StatValue>
-                  {cycleData.config?.analysis_provider ?? 'N/A'}
-                </StatValue>
-              </StatRow>
-              <StatRow>
-                <StatLabel>Dry Run</StatLabel>
-                <StatValue>
-                  {cycleData.config?.dry_run ? 'Yes' : 'No'}
-                </StatValue>
-              </StatRow>
-            </SummaryCard>
+          <ReportHeader>
+            <ReportTitle>
+              📈 Cycle {cycleData.cycle ?? 'N/A'} Report
+            </ReportTitle>
+            <DownloadButton onClick={downloadScreenshot} disabled={isCapturing}>
+              {isCapturing ? '📸 Capturing...' : '📸 Download Screenshot'}
+            </DownloadButton>
+          </ReportHeader>
 
-            <SummaryCard>
-              <SummaryTitle>📈 Counts</SummaryTitle>
-              <StatRow>
-                <StatLabel>Scanned</StatLabel>
-                <StatValue>{cycleData.counts?.scanned ?? 0}</StatValue>
-              </StatRow>
-              <StatRow>
-                <StatLabel>Passed Filters</StatLabel>
-                <StatValue>{cycleData.counts?.passed_filters ?? 0}</StatValue>
-              </StatRow>
-              <StatRow>
-                <StatLabel>Analyzed</StatLabel>
-                <StatValue>{cycleData.counts?.analyzed ?? 0}</StatValue>
-              </StatRow>
-              <StatRow>
-                <StatLabel>Opportunities</StatLabel>
-                <StatValue>{cycleData.counts?.opportunities ?? 0}</StatValue>
-              </StatRow>
-              <StatRow>
-                <StatLabel>Signals</StatLabel>
-                <StatValue>{cycleData.counts?.signals ?? 0}</StatValue>
-              </StatRow>
-              <StatRow>
-                <StatLabel>Executed</StatLabel>
-                <StatValue>{cycleData.counts?.executed ?? 0}</StatValue>
-              </StatRow>
-            </SummaryCard>
+          <ReportSection ref={reportRef}>
+            {/* Summary Cards */}
+            <SummaryGrid>
+              <SummaryCard>
+                <SummaryTitle>🔄 Cycle Info</SummaryTitle>
+                <StatRow>
+                  <StatLabel>Cycle Number</StatLabel>
+                  <StatValue>{cycleData.cycle ?? 'N/A'}</StatValue>
+                </StatRow>
+                <StatRow>
+                  <StatLabel>Started</StatLabel>
+                  <StatValue>
+                    {cycleData.started_at
+                      ? formatDate(cycleData.started_at)
+                      : 'N/A'}
+                  </StatValue>
+                </StatRow>
+                <StatRow>
+                  <StatLabel>Finished</StatLabel>
+                  <StatValue>
+                    {cycleData.finished_at
+                      ? formatDate(cycleData.finished_at)
+                      : 'N/A'}
+                  </StatValue>
+                </StatRow>
+                <StatRow>
+                  <StatLabel>Provider</StatLabel>
+                  <StatValue>
+                    {cycleData.config?.analysis_provider ?? 'N/A'}
+                  </StatValue>
+                </StatRow>
+                <StatRow>
+                  <StatLabel>Dry Run</StatLabel>
+                  <StatValue>
+                    {cycleData.config?.dry_run ? 'Yes' : 'No'}
+                  </StatValue>
+                </StatRow>
+              </SummaryCard>
 
-            <SummaryCard>
-              <SummaryTitle>💰 API Cost</SummaryTitle>
-              <StatRow>
-                <StatLabel>Total Cost</StatLabel>
-                <StatValue>
-                  ${(cycleData.api_cost?.total_cost ?? 0).toFixed(4)}
-                </StatValue>
-              </StatRow>
-              <StatRow>
-                <StatLabel>Total Requests</StatLabel>
-                <StatValue>{cycleData.api_cost?.total_requests ?? 0}</StatValue>
-              </StatRow>
-              <StatRow>
-                <StatLabel>Input Tokens</StatLabel>
-                <StatValue>
-                  {(
-                    cycleData.api_cost?.total_input_tokens ?? 0
-                  ).toLocaleString()}
-                </StatValue>
-              </StatRow>
-              <StatRow>
-                <StatLabel>Output Tokens</StatLabel>
-                <StatValue>
-                  {(
-                    cycleData.api_cost?.total_output_tokens ?? 0
-                  ).toLocaleString()}
-                </StatValue>
-              </StatRow>
-              <StatRow>
-                <StatLabel>Avg Cost/Request</StatLabel>
-                <StatValue>
-                  ${(cycleData.api_cost?.avg_cost_per_request ?? 0).toFixed(4)}
-                </StatValue>
-              </StatRow>
-            </SummaryCard>
+              <SummaryCard>
+                <SummaryTitle>📈 Counts</SummaryTitle>
+                <StatRow>
+                  <StatLabel>Scanned</StatLabel>
+                  <StatValue>{cycleData.counts?.scanned ?? 0}</StatValue>
+                </StatRow>
+                <StatRow>
+                  <StatLabel>Passed Filters</StatLabel>
+                  <StatValue>{cycleData.counts?.passed_filters ?? 0}</StatValue>
+                </StatRow>
+                <StatRow>
+                  <StatLabel>Analyzed</StatLabel>
+                  <StatValue>{cycleData.counts?.analyzed ?? 0}</StatValue>
+                </StatRow>
+                <StatRow>
+                  <StatLabel>Opportunities</StatLabel>
+                  <StatValue>{cycleData.counts?.opportunities ?? 0}</StatValue>
+                </StatRow>
+                <StatRow>
+                  <StatLabel>Signals</StatLabel>
+                  <StatValue>{cycleData.counts?.signals ?? 0}</StatValue>
+                </StatRow>
+                <StatRow>
+                  <StatLabel>Executed</StatLabel>
+                  <StatValue>{cycleData.counts?.executed ?? 0}</StatValue>
+                </StatRow>
+              </SummaryCard>
 
-            <SummaryCard>
-              <SummaryTitle>⚙️ Configuration</SummaryTitle>
-              <StatRow>
-                <StatLabel>Min Volume</StatLabel>
-                <StatValue>
-                  $
-                  {(
-                    cycleData.config?.filters?.min_volume ?? 0
-                  ).toLocaleString()}
-                </StatValue>
-              </StatRow>
-              <StatRow>
-                <StatLabel>Min Liquidity</StatLabel>
-                <StatValue>
-                  $
-                  {(
-                    cycleData.config?.filters?.min_liquidity ?? 0
-                  ).toLocaleString()}
-                </StatValue>
-              </StatRow>
-              <StatRow>
-                <StatLabel>Min Edge</StatLabel>
-                <StatValue>
-                  {((cycleData.config?.strategy?.min_edge ?? 0) * 100).toFixed(
-                    0,
-                  )}
-                  %
-                </StatValue>
-              </StatRow>
-              <StatRow>
-                <StatLabel>Min Confidence</StatLabel>
-                <StatValue>
-                  {(
-                    (cycleData.config?.strategy?.min_confidence ?? 0) * 100
-                  ).toFixed(0)}
-                  %
-                </StatValue>
-              </StatRow>
-              <StatRow>
-                <StatLabel>Max Position Size</StatLabel>
-                <StatValue>
-                  $
-                  {(
-                    cycleData.config?.risk?.max_position_size ?? 0
-                  ).toLocaleString()}
-                </StatValue>
-              </StatRow>
-            </SummaryCard>
-          </SummaryGrid>
+              <SummaryCard>
+                <SummaryTitle>💰 API Cost</SummaryTitle>
+                <StatRow>
+                  <StatLabel>Total Cost</StatLabel>
+                  <StatValue>
+                    ${(cycleData.api_cost?.total_cost ?? 0).toFixed(4)}
+                  </StatValue>
+                </StatRow>
+                <StatRow>
+                  <StatLabel>Total Requests</StatLabel>
+                  <StatValue>
+                    {cycleData.api_cost?.total_requests ?? 0}
+                  </StatValue>
+                </StatRow>
+                <StatRow>
+                  <StatLabel>Input Tokens</StatLabel>
+                  <StatValue>
+                    {(
+                      cycleData.api_cost?.total_input_tokens ?? 0
+                    ).toLocaleString()}
+                  </StatValue>
+                </StatRow>
+                <StatRow>
+                  <StatLabel>Output Tokens</StatLabel>
+                  <StatValue>
+                    {(
+                      cycleData.api_cost?.total_output_tokens ?? 0
+                    ).toLocaleString()}
+                  </StatValue>
+                </StatRow>
+                <StatRow>
+                  <StatLabel>Avg Cost/Request</StatLabel>
+                  <StatValue>
+                    $
+                    {(cycleData.api_cost?.avg_cost_per_request ?? 0).toFixed(4)}
+                  </StatValue>
+                </StatRow>
+              </SummaryCard>
 
-          {/* Markets Table */}
-          <TableSection>
-            <TableTitle>📋 Markets ({filteredMarkets.length})</TableTitle>
-            <FilterToggle>
-              <ToggleLabel>
-                <input
-                  type='checkbox'
-                  checked={showOnlyPassed}
-                  onChange={(e) => setShowOnlyPassed(e.target.checked)}
-                />
-                Show only markets that passed filters
-              </ToggleLabel>
-            </FilterToggle>
-            <TableWrapper>
-              <Table>
-                <thead>
-                  <tr>
-                    <Th>#</Th>
-                    <Th>Platform</Th>
-                    <Th>Title</Th>
-                    <Th>Category</Th>
-                    <Th>End Date</Th>
-                    <Th>Prices</Th>
-                    <Th>Volume</Th>
-                    <Th>Liquidity</Th>
-                    <Th>Passed</Th>
-                    <Th>Checks</Th>
-                    <Th>Reasons</Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredMarkets.map((market, index) => (
-                    <Tr key={market.market_id || index}>
-                      <Td>{index + 1}</Td>
-                      <Td>
-                        <Badge $variant='info'>
-                          {market.platform ?? 'N/A'}
-                        </Badge>
-                      </Td>
-                      <Td>
-                        <MarketTitle>{market.title ?? 'Untitled'}</MarketTitle>
-                      </Td>
-                      <Td>{market.category ?? 'N/A'}</Td>
-                      <Td>
-                        {market.end_date ? formatDate(market.end_date) : 'N/A'}
-                      </Td>
-                      <Td>
-                        <PriceCell>
-                          <PriceRow>
-                            <PriceLabel>Yes:</PriceLabel>
-                            <PriceValue>
-                              ${(market.prices?.yes ?? 0).toFixed(2)}
-                            </PriceValue>
-                          </PriceRow>
-                          <PriceRow>
-                            <PriceLabel>No:</PriceLabel>
-                            <PriceValue>
-                              ${(market.prices?.no ?? 0).toFixed(2)}
-                            </PriceValue>
-                          </PriceRow>
-                        </PriceCell>
-                      </Td>
-                      <Td>${(market.stats?.volume ?? 0).toLocaleString()}</Td>
-                      <Td>
-                        ${(market.stats?.liquidity ?? 0).toLocaleString()}
-                      </Td>
-                      <Td>
-                        <Badge
-                          $variant={
-                            market.filters?.passed ? 'success' : 'error'
-                          }
-                        >
-                          {market.filters?.passed ? 'Yes' : 'No'}
-                        </Badge>
-                      </Td>
-                      <Td>
-                        <div>
-                          <CheckIcon
-                            $passed={market.filters?.checks?.volume_ok ?? false}
-                          >
-                            {market.filters?.checks?.volume_ok ? '✓' : '✗'}
-                          </CheckIcon>{' '}
-                          Volume
-                        </div>
-                        <div>
-                          <CheckIcon
-                            $passed={
-                              market.filters?.checks?.liquidity_ok ?? false
+              <SummaryCard>
+                <SummaryTitle>⚙️ Configuration</SummaryTitle>
+                <StatRow>
+                  <StatLabel>Min Volume</StatLabel>
+                  <StatValue>
+                    $
+                    {(
+                      cycleData.config?.filters?.min_volume ?? 0
+                    ).toLocaleString()}
+                  </StatValue>
+                </StatRow>
+                <StatRow>
+                  <StatLabel>Min Liquidity</StatLabel>
+                  <StatValue>
+                    $
+                    {(
+                      cycleData.config?.filters?.min_liquidity ?? 0
+                    ).toLocaleString()}
+                  </StatValue>
+                </StatRow>
+                <StatRow>
+                  <StatLabel>Min Edge</StatLabel>
+                  <StatValue>
+                    {(
+                      (cycleData.config?.strategy?.min_edge ?? 0) * 100
+                    ).toFixed(0)}
+                    %
+                  </StatValue>
+                </StatRow>
+                <StatRow>
+                  <StatLabel>Min Confidence</StatLabel>
+                  <StatValue>
+                    {(
+                      (cycleData.config?.strategy?.min_confidence ?? 0) * 100
+                    ).toFixed(0)}
+                    %
+                  </StatValue>
+                </StatRow>
+                <StatRow>
+                  <StatLabel>Max Position Size</StatLabel>
+                  <StatValue>
+                    $
+                    {(
+                      cycleData.config?.risk?.max_position_size ?? 0
+                    ).toLocaleString()}
+                  </StatValue>
+                </StatRow>
+              </SummaryCard>
+            </SummaryGrid>
+
+            {/* Markets Table */}
+            <TableSection>
+              <TableTitle>📋 Markets ({filteredMarkets.length})</TableTitle>
+              <FilterToggle>
+                <ToggleLabel>
+                  <input
+                    type='checkbox'
+                    checked={showOnlyPassed}
+                    onChange={(e) => setShowOnlyPassed(e.target.checked)}
+                  />
+                  Show only markets that passed filters
+                </ToggleLabel>
+              </FilterToggle>
+              <TableWrapper>
+                <Table>
+                  <thead>
+                    <tr>
+                      <Th>#</Th>
+                      <Th>Platform</Th>
+                      <Th>Title</Th>
+                      <Th>Category</Th>
+                      <Th>End Date</Th>
+                      <Th>Prices</Th>
+                      <Th>Volume</Th>
+                      <Th>Liquidity</Th>
+                      <Th>Passed</Th>
+                      <Th>Checks</Th>
+                      <Th>Reasons</Th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredMarkets.map((market, index) => (
+                      <Tr key={market.market_id || index}>
+                        <Td>{index + 1}</Td>
+                        <Td>
+                          <Badge $variant='info'>
+                            {market.platform ?? 'N/A'}
+                          </Badge>
+                        </Td>
+                        <Td>
+                          <MarketTitle>
+                            {market.title ?? 'Untitled'}
+                          </MarketTitle>
+                        </Td>
+                        <Td>{market.category ?? 'N/A'}</Td>
+                        <Td>
+                          {market.end_date
+                            ? formatDate(market.end_date)
+                            : 'N/A'}
+                        </Td>
+                        <Td>
+                          <PriceCell>
+                            <PriceRow>
+                              <PriceLabel>Yes:</PriceLabel>
+                              <PriceValue>
+                                ${(market.prices?.yes ?? 0).toFixed(2)}
+                              </PriceValue>
+                            </PriceRow>
+                            <PriceRow>
+                              <PriceLabel>No:</PriceLabel>
+                              <PriceValue>
+                                ${(market.prices?.no ?? 0).toFixed(2)}
+                              </PriceValue>
+                            </PriceRow>
+                          </PriceCell>
+                        </Td>
+                        <Td>${(market.stats?.volume ?? 0).toLocaleString()}</Td>
+                        <Td>
+                          ${(market.stats?.liquidity ?? 0).toLocaleString()}
+                        </Td>
+                        <Td>
+                          <Badge
+                            $variant={
+                              market.filters?.passed ? 'success' : 'error'
                             }
                           >
-                            {market.filters?.checks?.liquidity_ok ? '✓' : '✗'}
-                          </CheckIcon>{' '}
-                          Liquidity
-                        </div>
-                        <div>
-                          <CheckIcon
-                            $passed={market.filters?.checks?.price_ok ?? false}
-                          >
-                            {market.filters?.checks?.price_ok ? '✓' : '✗'}
-                          </CheckIcon>{' '}
-                          Price
-                        </div>
-                      </Td>
-                      <Td>
-                        {(market.filters?.reasons?.length ?? 0) > 0 ? (
-                          <ReasonsList>
-                            {market.filters?.reasons?.map((reason, i) => (
-                              <li key={i}>{reason}</li>
-                            ))}
-                          </ReasonsList>
-                        ) : (
-                          <span style={{ color: '#28a745' }}>—</span>
-                        )}
-                      </Td>
-                    </Tr>
-                  ))}
-                </tbody>
-              </Table>
-            </TableWrapper>
-          </TableSection>
+                            {market.filters?.passed ? 'Yes' : 'No'}
+                          </Badge>
+                        </Td>
+                        <Td>
+                          <div>
+                            <CheckIcon
+                              $passed={
+                                market.filters?.checks?.volume_ok ?? false
+                              }
+                            >
+                              {market.filters?.checks?.volume_ok ? '✓' : '✗'}
+                            </CheckIcon>{' '}
+                            Volume
+                          </div>
+                          <div>
+                            <CheckIcon
+                              $passed={
+                                market.filters?.checks?.liquidity_ok ?? false
+                              }
+                            >
+                              {market.filters?.checks?.liquidity_ok ? '✓' : '✗'}
+                            </CheckIcon>{' '}
+                            Liquidity
+                          </div>
+                          <div>
+                            <CheckIcon
+                              $passed={
+                                market.filters?.checks?.price_ok ?? false
+                              }
+                            >
+                              {market.filters?.checks?.price_ok ? '✓' : '✗'}
+                            </CheckIcon>{' '}
+                            Price
+                          </div>
+                        </Td>
+                        <Td>
+                          {(market.filters?.reasons?.length ?? 0) > 0 ? (
+                            <ReasonsList>
+                              {market.filters?.reasons?.map((reason, i) => (
+                                <li key={i}>{reason}</li>
+                              ))}
+                            </ReasonsList>
+                          ) : (
+                            <span style={{ color: '#28a745' }}>—</span>
+                          )}
+                        </Td>
+                      </Tr>
+                    ))}
+                  </tbody>
+                </Table>
+              </TableWrapper>
+            </TableSection>
+          </ReportSection>
         </>
       )}
     </PageContainer>
