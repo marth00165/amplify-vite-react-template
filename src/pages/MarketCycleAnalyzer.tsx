@@ -5,13 +5,35 @@ import { Button, Card } from '../components/themed-components';
 
 // Types based on the cycle JSON structure
 interface MarketFilter {
-  passed: boolean;
-  checks: {
-    volume_ok: boolean;
-    liquidity_ok: boolean;
-    price_ok: boolean;
+  passed?: boolean;
+  checks?: {
+    volume_ok?: boolean;
+    liquidity_ok?: boolean;
+    price_ok?: boolean;
   };
-  reasons: string[];
+  reasons?: string[];
+}
+
+interface Signal {
+  market_id?: string;
+  platform?: string;
+  action?: string;
+  side?: string;
+  fair_value?: number;
+  market_price?: number;
+  estimated_probability?: number;
+  edge?: number;
+  confidence?: number;
+  kelly_fraction?: number;
+  position_size?: number;
+  expected_value?: number;
+  reasoning?: string;
+}
+
+interface Opportunity {
+  side?: string;
+  edge?: number;
+  estimated_probability?: number;
 }
 
 interface Market {
@@ -21,6 +43,10 @@ interface Market {
   description: string;
   category: string;
   end_date: string;
+  event_ticker?: string;
+  yes_option?: string;
+  no_option?: string;
+  volume_tier?: string;
   prices: {
     yes: number;
     no: number;
@@ -29,11 +55,18 @@ interface Market {
     volume: number;
     liquidity: number;
   };
-  filters: MarketFilter;
+  filters?: MarketFilter;
   analysis: unknown | null;
-  opportunity: unknown | null;
-  signal: unknown | null;
+  opportunity?: Opportunity | null;
+  signal?: Signal | null;
   execution: unknown | null;
+}
+
+interface TierSummary {
+  high?: number;
+  medium?: number;
+  low?: number;
+  skip?: number;
 }
 
 interface CycleConfig {
@@ -89,8 +122,10 @@ interface CycleData {
   counts?: Partial<CycleCounts>;
   api_cost?: Partial<ApiCost>;
   markets?: Market[];
-  signals?: unknown[];
+  signals?: Signal[];
   errors?: unknown[];
+  events?: unknown[];
+  tier_summary?: TierSummary;
 }
 
 // Styled Components
@@ -396,6 +431,99 @@ const ReportTitle = styled.h2`
   margin: 0;
 `;
 
+const SignalsSection = styled(Card)`
+  background: rgba(255, 255, 255, 0.95);
+  margin-bottom: 2rem;
+`;
+
+const SignalCard = styled.div`
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-left: 4px solid #52528c;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const SignalHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+`;
+
+const SignalTitle = styled.h4`
+  margin: 0;
+  color: #333;
+  font-size: 0.95rem;
+`;
+
+const SignalStats = styled.div`
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+`;
+
+const SignalStat = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  min-width: 80px;
+`;
+
+const SignalStatLabel = styled.span`
+  font-size: 0.7rem;
+  color: #666;
+  text-transform: uppercase;
+`;
+
+const SignalStatValue = styled.span<{ $highlight?: boolean }>`
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: ${({ $highlight }) => ($highlight ? '#28a745' : '#333')};
+`;
+
+const SignalReasoning = styled.p`
+  margin: 0;
+  font-size: 0.85rem;
+  color: #555;
+  line-height: 1.5;
+  background: white;
+  padding: 0.75rem;
+  border-radius: 4px;
+`;
+
+const TierBadge = styled.span<{ $tier: string }>`
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+
+  ${({ $tier }) => {
+    switch ($tier) {
+      case 'high':
+        return 'background: #d4edda; color: #155724;';
+      case 'medium':
+        return 'background: #fff3cd; color: #856404;';
+      case 'low':
+        return 'background: #f8d7da; color: #721c24;';
+      default:
+        return 'background: #e2e3e5; color: #383d41;';
+    }
+  }}
+`;
+
 export default function MarketCycleAnalyzer() {
   const [jsonInput, setJsonInput] = useState('');
   const [cycleData, setCycleData] = useState<CycleData | null>(null);
@@ -692,7 +820,102 @@ export default function MarketCycleAnalyzer() {
                   </StatValue>
                 </StatRow>
               </SummaryCard>
+
+              {cycleData.tier_summary && (
+                <SummaryCard>
+                  <SummaryTitle>📊 Volume Tiers</SummaryTitle>
+                  <StatRow>
+                    <StatLabel>High Volume</StatLabel>
+                    <StatValue>{cycleData.tier_summary.high ?? 0}</StatValue>
+                  </StatRow>
+                  <StatRow>
+                    <StatLabel>Medium Volume</StatLabel>
+                    <StatValue>{cycleData.tier_summary.medium ?? 0}</StatValue>
+                  </StatRow>
+                  <StatRow>
+                    <StatLabel>Low Volume</StatLabel>
+                    <StatValue>{cycleData.tier_summary.low ?? 0}</StatValue>
+                  </StatRow>
+                  <StatRow>
+                    <StatLabel>Skipped</StatLabel>
+                    <StatValue>{cycleData.tier_summary.skip ?? 0}</StatValue>
+                  </StatRow>
+                </SummaryCard>
+              )}
             </SummaryGrid>
+
+            {/* Signals Section */}
+            {cycleData.signals && cycleData.signals.length > 0 && (
+              <SignalsSection>
+                <TableTitle>
+                  🎯 Trading Signals ({cycleData.signals.length})
+                </TableTitle>
+                {cycleData.signals.map((signal, index) => (
+                  <SignalCard key={signal.market_id || index}>
+                    <SignalHeader>
+                      <SignalTitle>
+                        {signal.market_id || `Signal ${index + 1}`}
+                      </SignalTitle>
+                      <Badge
+                        $variant={
+                          signal.action?.includes('yes') ? 'success' : 'error'
+                        }
+                      >
+                        {signal.action?.toUpperCase() ||
+                          signal.side?.toUpperCase() ||
+                          'N/A'}
+                      </Badge>
+                    </SignalHeader>
+                    <SignalStats>
+                      <SignalStat>
+                        <SignalStatLabel>Market Price</SignalStatLabel>
+                        <SignalStatValue>
+                          {((signal.market_price ?? 0) * 100).toFixed(1)}%
+                        </SignalStatValue>
+                      </SignalStat>
+                      <SignalStat>
+                        <SignalStatLabel>Fair Value</SignalStatLabel>
+                        <SignalStatValue>
+                          {(
+                            (signal.fair_value ??
+                              signal.estimated_probability ??
+                              0) * 100
+                          ).toFixed(1)}
+                          %
+                        </SignalStatValue>
+                      </SignalStat>
+                      <SignalStat>
+                        <SignalStatLabel>Edge</SignalStatLabel>
+                        <SignalStatValue $highlight>
+                          {((signal.edge ?? 0) * 100).toFixed(1)}%
+                        </SignalStatValue>
+                      </SignalStat>
+                      <SignalStat>
+                        <SignalStatLabel>Kelly</SignalStatLabel>
+                        <SignalStatValue>
+                          {((signal.kelly_fraction ?? 0) * 100).toFixed(1)}%
+                        </SignalStatValue>
+                      </SignalStat>
+                      <SignalStat>
+                        <SignalStatLabel>Position</SignalStatLabel>
+                        <SignalStatValue>
+                          ${(signal.position_size ?? 0).toFixed(0)}
+                        </SignalStatValue>
+                      </SignalStat>
+                      <SignalStat>
+                        <SignalStatLabel>Expected Value</SignalStatLabel>
+                        <SignalStatValue $highlight>
+                          ${(signal.expected_value ?? 0).toFixed(0)}
+                        </SignalStatValue>
+                      </SignalStat>
+                    </SignalStats>
+                    {signal.reasoning && (
+                      <SignalReasoning>{signal.reasoning}</SignalReasoning>
+                    )}
+                  </SignalCard>
+                ))}
+              </SignalsSection>
+            )}
 
             {/* Markets Table */}
             <TableSection>
@@ -715,6 +938,7 @@ export default function MarketCycleAnalyzer() {
                       <Th>Platform</Th>
                       <Th>Title</Th>
                       <Th>Category</Th>
+                      <Th>Tier</Th>
                       <Th>End Date</Th>
                       <Th>Prices</Th>
                       <Th>Volume</Th>
@@ -739,6 +963,15 @@ export default function MarketCycleAnalyzer() {
                           </MarketTitle>
                         </Td>
                         <Td>{market.category ?? 'N/A'}</Td>
+                        <Td>
+                          {market.volume_tier ? (
+                            <TierBadge $tier={market.volume_tier}>
+                              {market.volume_tier}
+                            </TierBadge>
+                          ) : (
+                            'N/A'
+                          )}
+                        </Td>
                         <Td>
                           {market.end_date
                             ? formatDate(market.end_date)
@@ -765,45 +998,60 @@ export default function MarketCycleAnalyzer() {
                           ${(market.stats?.liquidity ?? 0).toLocaleString()}
                         </Td>
                         <Td>
-                          <Badge
-                            $variant={
-                              market.filters?.passed ? 'success' : 'error'
-                            }
-                          >
-                            {market.filters?.passed ? 'Yes' : 'No'}
-                          </Badge>
+                          {market.filters &&
+                          Object.keys(market.filters).length > 0 &&
+                          market.filters.passed !== undefined ? (
+                            <Badge
+                              $variant={
+                                market.filters.passed ? 'success' : 'error'
+                              }
+                            >
+                              {market.filters.passed ? 'Yes' : 'No'}
+                            </Badge>
+                          ) : (
+                            <Badge $variant='warning'>N/A</Badge>
+                          )}
                         </Td>
                         <Td>
-                          <div>
-                            <CheckIcon
-                              $passed={
-                                market.filters?.checks?.volume_ok ?? false
-                              }
-                            >
-                              {market.filters?.checks?.volume_ok ? '✓' : '✗'}
-                            </CheckIcon>{' '}
-                            Volume
-                          </div>
-                          <div>
-                            <CheckIcon
-                              $passed={
-                                market.filters?.checks?.liquidity_ok ?? false
-                              }
-                            >
-                              {market.filters?.checks?.liquidity_ok ? '✓' : '✗'}
-                            </CheckIcon>{' '}
-                            Liquidity
-                          </div>
-                          <div>
-                            <CheckIcon
-                              $passed={
-                                market.filters?.checks?.price_ok ?? false
-                              }
-                            >
-                              {market.filters?.checks?.price_ok ? '✓' : '✗'}
-                            </CheckIcon>{' '}
-                            Price
-                          </div>
+                          {market.filters?.checks &&
+                          Object.keys(market.filters.checks).length > 0 ? (
+                            <>
+                              <div>
+                                <CheckIcon
+                                  $passed={
+                                    market.filters.checks.volume_ok ?? false
+                                  }
+                                >
+                                  {market.filters.checks.volume_ok ? '✓' : '✗'}
+                                </CheckIcon>{' '}
+                                Volume
+                              </div>
+                              <div>
+                                <CheckIcon
+                                  $passed={
+                                    market.filters.checks.liquidity_ok ?? false
+                                  }
+                                >
+                                  {market.filters.checks.liquidity_ok
+                                    ? '✓'
+                                    : '✗'}
+                                </CheckIcon>{' '}
+                                Liquidity
+                              </div>
+                              <div>
+                                <CheckIcon
+                                  $passed={
+                                    market.filters.checks.price_ok ?? false
+                                  }
+                                >
+                                  {market.filters.checks.price_ok ? '✓' : '✗'}
+                                </CheckIcon>{' '}
+                                Price
+                              </div>
+                            </>
+                          ) : (
+                            <span style={{ color: '#666' }}>—</span>
+                          )}
                         </Td>
                         <Td>
                           {(market.filters?.reasons?.length ?? 0) > 0 ? (
