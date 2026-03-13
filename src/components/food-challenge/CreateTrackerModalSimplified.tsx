@@ -6,6 +6,7 @@ import {
   SimpleTracker,
 } from '../../api/foodChallengeSimplified';
 import { Card } from '../themed-components';
+import { toLocalDateInputValue } from '../../utils/foodChallengeUtils';
 
 const Backdrop = styled.div`
   position: fixed;
@@ -91,9 +92,7 @@ export const CreateTrackerModalSimplified: React.FC<Props> = ({
 }) => {
   const [name, setName] = useState('Hot Dog Challenge');
   const [goal, setGoal] = useState('21');
-  const [startDate, setStartDate] = useState(
-    new Date().toISOString().split('T')[0],
-  );
+  const [startDate, setStartDate] = useState(toLocalDateInputValue());
   const [endDate, setEndDate] = useState('');
   const [isPublic, setIsPublic] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -157,7 +156,7 @@ export const CreateTrackerModalSimplified: React.FC<Props> = ({
       // Reset form
       setName('Hot Dog Challenge');
       setGoal('21');
-      setStartDate(new Date().toISOString().split('T')[0]);
+      setStartDate(toLocalDateInputValue());
       setEndDate('');
       setIsPublic(false);
       handleClose();

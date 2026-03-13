@@ -82,6 +82,60 @@ export const foodChallengeTheme = {
   },
 };
 
+const DATE_ONLY_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+export const isDateOnlyString = (value: string): boolean =>
+  DATE_ONLY_PATTERN.test(value);
+
+export const parseFoodChallengeDate = (date: string | Date): Date => {
+  if (date instanceof Date) {
+    return new Date(date);
+  }
+
+  const match = DATE_ONLY_PATTERN.exec(date);
+  if (match) {
+    const [, year, month, day] = match;
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+
+  return new Date(date);
+};
+
+export const toLocalDateInputValue = (date: string | Date = new Date()): string => {
+  const localDate = parseFoodChallengeDate(date);
+  const year = localDate.getFullYear();
+  const month = String(localDate.getMonth() + 1).padStart(2, '0');
+  const day = String(localDate.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+};
+
+export const formatLogDateTime = (date: string | Date): string => {
+  const parsedDate = parseFoodChallengeDate(date);
+
+  if (typeof date === 'string' && isDateOnlyString(date)) {
+    return parsedDate.toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year:
+        parsedDate.getFullYear() !== new Date().getFullYear()
+          ? 'numeric'
+          : undefined,
+    });
+  }
+
+  return parsedDate.toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    year:
+      parsedDate.getFullYear() !== new Date().getFullYear()
+        ? 'numeric'
+        : undefined,
+  });
+};
+
 // Helper functions for unit conversions and calculations
 export const convertToBaseUnits = (
   quantity: number,
@@ -124,7 +178,7 @@ export const calculateDaysRemaining = (endDate: string): number => {
 };
 
 export const formatDate = (date: string | Date): string => {
-  const d = typeof date === 'string' ? new Date(date) : date;
+  const d = parseFoodChallengeDate(date);
   return d.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',

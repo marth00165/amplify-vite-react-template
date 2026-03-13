@@ -120,6 +120,7 @@ export const TrackerDashboard: React.FC<TrackerDashboardProps> = () => {
     foodItemName: string,
     foodItemValue: number,
     quantity: number,
+    consumedAt: string,
   ) => {
     // Optimistically update the specific tracker
     setTrackers((prevTrackers) =>
@@ -143,7 +144,7 @@ export const TrackerDashboard: React.FC<TrackerDashboardProps> = () => {
                 foodItemId: foodItemName,
                 quantity: totalValue,
                 unit: 'hot_dog_unit',
-                consumedAt: new Date().toISOString(),
+                consumedAt,
                 notes: `${quantity} × ${foodItemName}`,
               } as any,
             ],

@@ -13,6 +13,8 @@ import {
 import {
   foodChallengeTheme,
   formatPercentage,
+  formatDate,
+  formatLogDateTime,
 } from '../../utils/foodChallengeUtils';
 import type { SimpleTracker } from '../../api/foodChallengeSimplified';
 
@@ -283,26 +285,6 @@ export const TrackerCard: React.FC<TrackerCardProps> = ({
     )
     .slice(0, 3);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      year:
-        new Date(dateString).getFullYear() !== new Date().getFullYear()
-          ? 'numeric'
-          : undefined,
-    });
-  };
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    });
-  };
-
   return (
     <StyledCard>
       <CardContent>
@@ -390,7 +372,7 @@ export const TrackerCard: React.FC<TrackerCardProps> = ({
                     }}
                   >
                     {log.consumedAt
-                      ? formatDateTime(log.consumedAt)
+                      ? formatLogDateTime(log.consumedAt)
                       : 'No date'}{' '}
                     • {log.quantity.toFixed(2)} hot_dog_units
                   </div>

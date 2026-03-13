@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import {
   foodChallengeTheme,
+  formatDate,
+  formatLogDateTime,
   formatPercentage,
 } from '../utils/foodChallengeUtils';
 import {
@@ -233,26 +235,6 @@ export const TrackerPublicPage: React.FC = () => {
     )
     .slice(0, 10);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      year:
-        new Date(dateString).getFullYear() !== new Date().getFullYear()
-          ? 'numeric'
-          : undefined,
-    });
-  };
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    });
-  };
-
   return (
     <PageContainer>
       <PageContent>
@@ -323,7 +305,7 @@ export const TrackerPublicPage: React.FC = () => {
                   <ActivityItem key={log.id}>
                     <ActivityTime>
                       {log.consumedAt
-                        ? formatDateTime(log.consumedAt)
+                        ? formatLogDateTime(log.consumedAt)
                         : 'No date'}
                     </ActivityTime>
                     <ActivityQuantity>

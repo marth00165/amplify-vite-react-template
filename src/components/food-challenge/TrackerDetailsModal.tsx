@@ -1,8 +1,14 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { foodChallengeTheme } from '../../theme';
 import { Card } from '../themed-components';
 import { SimpleTracker } from '../../api/foodChallengeSimplified';
+import {
+  formatDate,
+  formatLogDateTime,
+  parseFoodChallengeDate,
+  toLocalDateInputValue,
+} from '../../utils/foodChallengeUtils';
 
 const Backdrop = styled.div`
   position: fixed;
@@ -219,7 +225,7 @@ const ChartContainer = styled.div`
   gap: ${foodChallengeTheme.spacing.md};
   overflow-x: auto;
   padding-bottom: ${foodChallengeTheme.spacing.md};
-  height: 200px;
+  min-height: 220px;
   align-items: flex-end;
 `;
 
@@ -229,12 +235,22 @@ const BarWrapper = styled.div`
   align-items: center;
   gap: ${foodChallengeTheme.spacing.sm};
   flex: 0 0 auto;
-  min-width: 40px;
+  min-width: 56px;
 `;
 
-const Bar = styled.div<{ height: number }>`
-  width: 30px;
-  height: ${(props) => props.height}px;
+const BarValue = styled.div`
+  min-height: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: ${foodChallengeTheme.colors.primary};
+  white-space: nowrap;
+`;
+
+const Bar = styled.button<{ height: number; isSelected: boolean }>`
+  width: 32px;
+  height: ${(props) => Math.max(props.height, 8)}px;
+  border: none;
+  padding: 0;
   background: linear-gradient(
     180deg,
     ${foodChallengeTheme.colors.primary},
@@ -242,20 +258,17 @@ const Bar = styled.div<{ height: number }>`
   );
   border-radius: ${foodChallengeTheme.borderRadius.md};
   transition: all 0.3s ease;
-  position: relative;
+  cursor: pointer;
+  box-shadow: ${(props) =>
+    props.isSelected
+      ? `0 0 0 3px ${foodChallengeTheme.colors.white},
+         0 0 0 5px ${foodChallengeTheme.colors.primary}`
+      : 'none'};
+  transform: ${(props) => (props.isSelected ? 'translateY(-4px)' : 'none')};
 
-  &:hover::after {
-    content: attr(data-value);
-    position: absolute;
-    bottom: 105%;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: ${foodChallengeTheme.colors.primary};
-    color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    white-space: nowrap;
+  &:focus-visible {
+    outline: 3px solid ${foodChallengeTheme.colors.primary};
+    outline-offset: 3px;
   }
 `;
 
@@ -264,9 +277,6 @@ const BarLabel = styled.div`
   color: ${foodChallengeTheme.colors.textSecondary};
   text-align: center;
   white-space: nowrap;
-  max-width: 40px;
-  overflow: hidden;
-  text-overflow: ellipsis;
 `;
 
 interface Props {
@@ -284,6 +294,7 @@ export const TrackerDetailsModal: React.FC<Props> = ({
   const [searchDate, setSearchDate] = useState('');
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'name'>('date');
   const [sortDesc, setSortDesc] = useState(true);
+  const [selectedBarDate, setSelectedBarDate] = useState<string | null>(null);
 
   // Filter and sort logs
   const filteredLogs = useMemo(() => {
@@ -302,7 +313,11 @@ export const TrackerDetailsModal: React.FC<Props> = ({
     }
 
     if (searchDate.trim()) {
-      filtered = filtered.filter((log) => log.consumedAt?.includes(searchDate));
+      filtered = filtered.filter(
+        (log) =>
+          !!log.consumedAt &&
+          toLocalDateInputValue(log.consumedAt) === searchDate,
+      );
     }
 
     // Sort
@@ -327,19 +342,60 @@ export const TrackerDetailsModal: React.FC<Props> = ({
 
   // Calculate daily progress
   const dailyProgress = useMemo(() => {
-    if (!tracker) return {};
+    if (!tracker) return [];
 
-    const progress: Record<string, number> = {};
+    const progress = new Map<
+      string,
+      {
+        amount: number;
+        logCount: number;
+      }
+    >();
 
     (tracker.consumptionLogs || []).forEach((log) => {
-      if (log.consumedAt) {
-        const date = log.consumedAt.split('T')[0];
-        progress[date] = (progress[date] || 0) + log.quantity;
+      if (!log.consumedAt) {
+        return;
       }
+
+      const dateKey = toLocalDateInputValue(log.consumedAt);
+      const current = progress.get(dateKey) || { amount: 0, logCount: 0 };
+
+      progress.set(dateKey, {
+        amount: current.amount + log.quantity,
+        logCount: current.logCount + 1,
+      });
     });
 
-    return progress;
+    return Array.from(progress.entries())
+      .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
+      .map(([dateKey, entry]) => ({
+        dateKey,
+        amount: entry.amount,
+        logCount: entry.logCount,
+        label: parseFoodChallengeDate(dateKey).toLocaleDateString(undefined, {
+          month: 'short',
+          day: 'numeric',
+        }),
+      }));
   }, [tracker]);
+
+  useEffect(() => {
+    if (dailyProgress.length === 0) {
+      setSelectedBarDate(null);
+      return;
+    }
+
+    setSelectedBarDate((current) => {
+      if (
+        current &&
+        dailyProgress.some((entry) => entry.dateKey === current)
+      ) {
+        return current;
+      }
+
+      return dailyProgress[dailyProgress.length - 1].dateKey;
+    });
+  }, [dailyProgress]);
 
   const handleSortClick = (column: 'date' | 'amount' | 'name') => {
     if (sortBy === column) {
@@ -352,9 +408,10 @@ export const TrackerDetailsModal: React.FC<Props> = ({
 
   if (!isOpen || !tracker) return null;
 
-  const totalDays = Object.keys(dailyProgress).length;
+  const totalDays = dailyProgress.length;
   const averagePerDay =
     totalDays > 0 ? (tracker.totalConsumed / totalDays).toFixed(2) : '0.00';
+  const maxDaily = Math.max(...dailyProgress.map((entry) => entry.amount), 0);
 
   return (
     <Backdrop onClick={onClose}>
@@ -417,21 +474,32 @@ export const TrackerDetailsModal: React.FC<Props> = ({
             <ChartSection>
               <ChartTitle>Daily Progress</ChartTitle>
               <ChartContainer>
-                {Object.entries(dailyProgress)
-                  .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
-                  .map(([date, amount]) => {
-                    const maxDaily = Math.max(...Object.values(dailyProgress));
-                    const heightPercentage = (amount / maxDaily) * 150; // Max height 150px
-                    return (
-                      <BarWrapper key={date}>
-                        <Bar
-                          height={heightPercentage}
-                          title={`${amount.toFixed(2)} units`}
-                        />
-                        <BarLabel>{date.split('-')[2]}</BarLabel>
-                      </BarWrapper>
-                    );
-                  })}
+                {dailyProgress.map((entry) => {
+                  const heightPercentage =
+                    maxDaily > 0 ? (entry.amount / maxDaily) * 150 : 0;
+                  const isSelected = selectedBarDate === entry.dateKey;
+
+                  return (
+                    <BarWrapper key={entry.dateKey}>
+                      <BarValue>
+                        {isSelected ? `${entry.amount.toFixed(2)} units` : ''}
+                      </BarValue>
+                      <Bar
+                        type='button'
+                        height={heightPercentage}
+                        isSelected={isSelected}
+                        onClick={() =>
+                          setSelectedBarDate((current) =>
+                            current === entry.dateKey ? null : entry.dateKey,
+                          )
+                        }
+                        title={`${formatDate(entry.dateKey)}: ${entry.amount.toFixed(2)} units across ${entry.logCount} log${entry.logCount === 1 ? '' : 's'}`}
+                        aria-label={`${formatDate(entry.dateKey)}: ${entry.amount.toFixed(2)} units across ${entry.logCount} log${entry.logCount === 1 ? '' : 's'}`}
+                      />
+                      <BarLabel>{entry.label}</BarLabel>
+                    </BarWrapper>
+                  );
+                })}
               </ChartContainer>
             </ChartSection>
           )}
@@ -485,7 +553,7 @@ export const TrackerDetailsModal: React.FC<Props> = ({
                       <TableCell>{log.quantity.toFixed(2)} units</TableCell>
                       <TableCell>
                         {log.consumedAt
-                          ? new Date(log.consumedAt).toLocaleString()
+                          ? formatLogDateTime(log.consumedAt)
                           : 'No date'}
                       </TableCell>
                     </TableRow>

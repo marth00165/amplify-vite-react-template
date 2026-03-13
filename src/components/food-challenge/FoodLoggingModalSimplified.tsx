@@ -4,6 +4,7 @@ import { foodChallengeTheme } from '../../theme';
 import { createConsumptionLog } from '../../api/foodChallengeSimplified';
 import { useHotDogData } from '../../hooks/useHotDogData';
 import { Card } from '../themed-components';
+import { toLocalDateInputValue } from '../../utils/foodChallengeUtils';
 
 const Backdrop = styled.div`
   position: fixed;
@@ -108,6 +109,7 @@ interface Props {
     foodItemName: string,
     foodItemValue: number,
     quantity: number,
+    consumedAt: string,
   ) => void;
   onClose: () => void;
 }
@@ -124,9 +126,7 @@ export const FoodLoggingModalSimplified: React.FC<Props> = ({
     value: number;
   } | null>(null);
   const [quantity, setQuantity] = useState('1');
-  const [consumedAt, setConsumedAt] = useState(
-    new Date().toISOString().split('T')[0],
-  );
+  const [consumedAt, setConsumedAt] = useState(toLocalDateInputValue());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -174,12 +174,12 @@ export const FoodLoggingModalSimplified: React.FC<Props> = ({
       });
 
       // Call optimistic update callback
-      onLogged(trackerId, selectedItem.name, selectedItem.value, qty);
+      onLogged(trackerId, selectedItem.name, selectedItem.value, qty, consumedAt);
 
       // Clear form and close
       setSelectedItem(null);
       setQuantity('1');
-      setConsumedAt(new Date().toISOString().split('T')[0]);
+      setConsumedAt(toLocalDateInputValue());
       handleClose();
     } catch (err) {
       console.error('Error logging food:', err);
