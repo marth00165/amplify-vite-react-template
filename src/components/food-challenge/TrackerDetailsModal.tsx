@@ -22,18 +22,40 @@ const Backdrop = styled.div`
   justify-content: center;
   z-index: 1000;
   overflow-y: auto;
+  padding: ${foodChallengeTheme.spacing.md};
+  box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    align-items: flex-start;
+    padding: ${foodChallengeTheme.spacing.sm};
+  }
 `;
 
 const ModalWrapper = styled.div`
   position: relative;
   z-index: 1001;
-  margin: 20px;
+  width: min(100%, 900px);
+  margin: auto 0;
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 `;
 
 const ModalContent = styled(Card)`
-  max-width: 900px;
+  width: 100%;
   max-height: 90vh;
   overflow-y: auto;
+  box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    padding: ${foodChallengeTheme.spacing.md};
+    max-height: calc(100dvh - ${foodChallengeTheme.spacing.md});
+  }
+
+  @media (max-width: 480px) {
+    padding: ${foodChallengeTheme.spacing.sm};
+  }
 `;
 
 const ModalHeader = styled.div`
@@ -43,11 +65,20 @@ const ModalHeader = styled.div`
   margin-bottom: ${foodChallengeTheme.spacing.lg};
   padding-bottom: ${foodChallengeTheme.spacing.md};
   border-bottom: 2px solid ${foodChallengeTheme.colors.secondary};
+  gap: ${foodChallengeTheme.spacing.md};
 `;
 
 const ModalTitle = styled.h2`
   margin: 0;
   color: ${foodChallengeTheme.colors.primary};
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
+
+  @media (max-width: 480px) {
+    font-size: 1.375rem;
+    line-height: 1.2;
+  }
 `;
 
 const CloseButton = styled.button`
@@ -78,6 +109,11 @@ const ProgressLabel = styled.div`
   margin-bottom: ${foodChallengeTheme.spacing.sm};
   font-weight: bold;
   color: ${foodChallengeTheme.colors.text};
+  gap: ${foodChallengeTheme.spacing.sm};
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+  }
 `;
 
 const ProgressBarContainer = styled.div`
@@ -112,6 +148,10 @@ const StatsGrid = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: ${foodChallengeTheme.spacing.md};
   margin-bottom: ${foodChallengeTheme.spacing.lg};
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const StatCard = styled.div`
@@ -131,6 +171,7 @@ const StatValue = styled.div`
   font-size: 1.5rem;
   font-weight: bold;
   color: ${foodChallengeTheme.colors.primary};
+  overflow-wrap: anywhere;
 `;
 
 const SearchSection = styled.div`
@@ -142,27 +183,37 @@ const SearchSection = styled.div`
 
 const SearchInput = styled.input`
   flex: 1;
-  min-width: 200px;
+  min-width: 180px;
   padding: ${foodChallengeTheme.spacing.sm};
   border: 2px solid ${foodChallengeTheme.colors.secondary};
   border-radius: ${foodChallengeTheme.borderRadius.md};
   font-size: ${foodChallengeTheme.typography.body.fontSize};
+  box-sizing: border-box;
 
   &:focus {
     outline: none;
     border-color: ${foodChallengeTheme.colors.primary};
+  }
+
+  @media (max-width: 480px) {
+    min-width: 100%;
   }
 `;
 
 const TableContainer = styled.div`
   overflow-x: auto;
   margin-bottom: ${foodChallengeTheme.spacing.lg};
+  -webkit-overflow-scrolling: touch;
 `;
 
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
   font-size: 0.95rem;
+
+  @media (max-width: 768px) {
+    min-width: 620px;
+  }
 `;
 
 const TableHeader = styled.thead`
@@ -213,6 +264,10 @@ const ChartSection = styled.div`
   padding: ${foodChallengeTheme.spacing.lg};
   background-color: ${foodChallengeTheme.colors.background};
   border-radius: ${foodChallengeTheme.borderRadius.md};
+
+  @media (max-width: 480px) {
+    padding: ${foodChallengeTheme.spacing.md};
+  }
 `;
 
 const ChartTitle = styled.h3`
@@ -227,6 +282,12 @@ const ChartContainer = styled.div`
   padding-bottom: ${foodChallengeTheme.spacing.md};
   min-height: 220px;
   align-items: flex-end;
+  -webkit-overflow-scrolling: touch;
+
+  @media (max-width: 480px) {
+    gap: ${foodChallengeTheme.spacing.sm};
+    min-height: 180px;
+  }
 `;
 
 const BarWrapper = styled.div`
@@ -236,6 +297,10 @@ const BarWrapper = styled.div`
   gap: ${foodChallengeTheme.spacing.sm};
   flex: 0 0 auto;
   min-width: 56px;
+
+  @media (max-width: 480px) {
+    min-width: 44px;
+  }
 `;
 
 const BarValue = styled.div`
@@ -269,6 +334,10 @@ const Bar = styled.button<{ height: number; isSelected: boolean }>`
   &:focus-visible {
     outline: 3px solid ${foodChallengeTheme.colors.primary};
     outline-offset: 3px;
+  }
+
+  @media (max-width: 480px) {
+    width: 24px;
   }
 `;
 

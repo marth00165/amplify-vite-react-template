@@ -16,21 +16,34 @@ const Backdrop = styled.div`
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 1000;
+  padding: ${foodChallengeTheme.spacing.md};
+  box-sizing: border-box;
+  overflow-y: auto;
+
+  @media (max-width: 768px) {
+    align-items: flex-start;
+    padding: ${foodChallengeTheme.spacing.sm};
+  }
 `;
 
 const ModalWrapper = styled.div`
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  position: relative;
   z-index: 1001;
-  max-height: 90vh;
-  overflow-y: auto;
+  width: min(100%, 500px);
+  margin: auto 0;
 `;
 
 const ModalContent = styled(Card)`
-  max-width: 500px;
+  width: 100%;
+  box-sizing: border-box;
+
+  @media (max-width: 480px) {
+    padding: ${foodChallengeTheme.spacing.md};
+  }
 `;
 
 const ModalHeader = styled.div`
@@ -40,12 +53,16 @@ const ModalHeader = styled.div`
   margin-bottom: ${foodChallengeTheme.spacing.lg};
   padding-bottom: ${foodChallengeTheme.spacing.md};
   border-bottom: 2px solid ${foodChallengeTheme.colors.secondary};
+  gap: ${foodChallengeTheme.spacing.md};
 `;
 
 const ModalTitle = styled.h2`
   margin: 0;
   color: ${foodChallengeTheme.colors.primary};
   font-size: ${foodChallengeTheme.typography.h2.fontSize};
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
 `;
 
 const CloseButton = styled.button`
@@ -82,10 +99,17 @@ const LinkContainer = styled.div`
   display: flex;
   gap: ${foodChallengeTheme.spacing.sm};
   align-items: center;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 `;
 
 const ShareLink = styled.input`
   flex: 1;
+  width: 100%;
+  box-sizing: border-box;
   padding: ${foodChallengeTheme.spacing.md};
   border: 2px solid ${foodChallengeTheme.colors.border};
   border-radius: ${foodChallengeTheme.borderRadius.md};
@@ -120,6 +144,10 @@ const CopyButton = styled.button`
   &:active {
     transform: translateY(0);
   }
+
+  @media (max-width: 480px) {
+    width: 100%;
+  }
 `;
 
 const CopyFeedback = styled.div<{ show: boolean }>`
@@ -135,6 +163,10 @@ const ButtonGroup = styled.div`
   gap: ${foodChallengeTheme.spacing.md};
   justify-content: flex-end;
   margin-top: ${foodChallengeTheme.spacing.lg};
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+  }
 `;
 
 const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
@@ -150,6 +182,10 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
 
   &:hover {
     opacity: 0.8;
+  }
+
+  @media (max-width: 480px) {
+    width: 100%;
   }
 `;
 

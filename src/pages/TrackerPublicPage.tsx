@@ -17,6 +17,15 @@ const PageContainer = styled.div`
   min-height: 100vh;
   background: ${foodChallengeTheme.colors.background};
   padding: ${foodChallengeTheme.spacing.lg};
+  box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    padding: ${foodChallengeTheme.spacing.md};
+  }
+
+  @media (max-width: 480px) {
+    padding: ${foodChallengeTheme.spacing.sm};
+  }
 `;
 
 const PageContent = styled.div`
@@ -27,6 +36,15 @@ const PageContent = styled.div`
   border-radius: ${foodChallengeTheme.borderRadius.lg};
   padding: ${foodChallengeTheme.spacing.xl};
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    padding: ${foodChallengeTheme.spacing.md};
+  }
+
+  @media (max-width: 480px) {
+    padding: ${foodChallengeTheme.spacing.sm};
+  }
 `;
 
 const PageHeader = styled.div`
@@ -36,12 +54,20 @@ const PageHeader = styled.div`
   margin-bottom: ${foodChallengeTheme.spacing.lg};
   padding-bottom: ${foodChallengeTheme.spacing.md};
   border-bottom: 2px solid ${foodChallengeTheme.colors.secondary};
+  gap: ${foodChallengeTheme.spacing.md};
 `;
 
 const PageTitle = styled.h1`
   margin: 0;
   color: ${foodChallengeTheme.colors.primary};
   font-size: ${foodChallengeTheme.typography.h1.fontSize};
+  min-width: 0;
+  overflow-wrap: anywhere;
+
+  @media (max-width: 480px) {
+    font-size: 1.5rem;
+    line-height: 1.2;
+  }
 `;
 
 const BackButton = styled.button`
@@ -87,6 +113,11 @@ const ProgressLabel = styled.div`
   margin-bottom: ${foodChallengeTheme.spacing.sm};
   font-weight: bold;
   color: ${foodChallengeTheme.colors.textPrimary};
+  gap: ${foodChallengeTheme.spacing.sm};
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+  }
 `;
 
 const ProgressValue = styled.span`
@@ -98,6 +129,10 @@ const StatsGrid = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: ${foodChallengeTheme.spacing.md};
   margin-bottom: ${foodChallengeTheme.spacing.lg};
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const StatCard = styled.div`
@@ -117,6 +152,7 @@ const StatValue = styled.div`
   font-size: 1.5rem;
   font-weight: bold;
   color: ${foodChallengeTheme.colors.primary};
+  overflow-wrap: anywhere;
 `;
 
 const ActivitySection = styled.div`
@@ -151,6 +187,7 @@ const ActivityTime = styled.div`
 const ActivityQuantity = styled.div`
   color: ${foodChallengeTheme.colors.textPrimary};
   font-weight: 600;
+  overflow-wrap: anywhere;
 `;
 
 const EmptyStateMessage = styled.div`

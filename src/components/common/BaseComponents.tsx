@@ -116,6 +116,7 @@ const StyledCard = styled.div.withConfig({
   background: ${foodChallengeTheme.colors.white};
   border: 1px solid ${foodChallengeTheme.colors.border};
   border-radius: ${foodChallengeTheme.borderRadius.lg};
+  box-sizing: border-box;
   padding: ${(props) => {
     switch (props.padding) {
       case 'sm':

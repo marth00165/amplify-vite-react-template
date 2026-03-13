@@ -18,9 +18,21 @@ interface TrackerDashboardProps {}
 
 const DashboardContainer = styled.div`
   max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
   padding: ${foodChallengeTheme.spacing.lg};
   padding-top: 100px;
+  box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    padding: ${foodChallengeTheme.spacing.md};
+    padding-top: 88px;
+  }
+
+  @media (max-width: 480px) {
+    padding-left: ${foodChallengeTheme.spacing.sm};
+    padding-right: ${foodChallengeTheme.spacing.sm};
+  }
 `;
 
 const DashboardHeader = styled.div`
@@ -41,12 +53,26 @@ const DashboardTitle = styled.h1`
   font-size: ${foodChallengeTheme.typography.h1.fontSize};
   font-weight: ${foodChallengeTheme.typography.h1.fontWeight};
   margin: 0;
+
+  @media (max-width: 768px) {
+    text-align: center;
+    font-size: 1.75rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.5rem;
+    line-height: 1.2;
+  }
 `;
 
 const TrackersGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: ${foodChallengeTheme.spacing.lg};
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;

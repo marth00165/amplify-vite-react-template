@@ -20,12 +20,25 @@ const NavbarContainer = styled.nav`
   background: #52528c;
   padding: 1rem 2rem;
   z-index: 1000;
+  box-sizing: border-box;
+  gap: 1rem;
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+    align-items: flex-start;
+  }
 `;
 
 const NavContent = styled.div`
   display: flex;
   align-items: center;
   gap: 2rem;
+  min-width: 0;
+  flex: 1;
+
+  @media (max-width: 768px) {
+    gap: 1rem;
+  }
 `;
 
 const NavLinks = styled.div`
@@ -64,6 +77,9 @@ const BrandLink = styled(Link)`
   color: white;
   font-size: 1.5rem;
   transition: text-shadow 0.3s ease;
+  line-height: 1.2;
+  min-width: 0;
+  overflow-wrap: anywhere;
 
   &:hover,
   &:focus,
@@ -72,10 +88,16 @@ const BrandLink = styled(Link)`
     text-decoration: none !important;
     text-shadow: 0 0 10px rgba(82, 82, 140, 0.8), 0 0 20px rgba(2, 2, 9, 0.5);
   }
+
+  @media (max-width: 768px) {
+    font-size: clamp(1rem, 5vw, 1.35rem);
+    max-width: 100%;
+  }
 `;
 
 const Profile = styled.div`
   position: relative;
+  flex-shrink: 0;
 `;
 
 const ProfileIcon = styled.button`

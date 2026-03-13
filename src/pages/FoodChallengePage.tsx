@@ -8,6 +8,12 @@ const Container = styled.div`
   background: ${foodChallengeTheme.colors.background};
   padding: ${foodChallengeTheme.spacing.lg} ${foodChallengeTheme.spacing.md};
   padding-top: 100px;
+  box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    padding: ${foodChallengeTheme.spacing.md} ${foodChallengeTheme.spacing.sm};
+    padding-top: 88px;
+  }
 `;
 
 const Header = styled.div`
@@ -21,6 +27,15 @@ const Title = styled.h1`
   color: ${foodChallengeTheme.colors.textPrimary};
   font-size: ${foodChallengeTheme.typography.h1.fontSize};
   font-weight: ${foodChallengeTheme.typography.h1.fontWeight};
+
+  @media (max-width: 768px) {
+    font-size: 1.75rem;
+    line-height: 1.2;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.5rem;
+  }
 `;
 
 const Description = styled.p`

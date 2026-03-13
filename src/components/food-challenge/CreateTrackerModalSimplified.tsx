@@ -19,11 +19,24 @@ const Backdrop = styled.div`
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: ${foodChallengeTheme.spacing.md};
+  box-sizing: border-box;
+  overflow-y: auto;
 `;
 
 const ModalWrapper = styled.div`
   position: relative;
   z-index: 1001;
+  width: min(100%, 500px);
+`;
+
+const ModalCard = styled(Card)`
+  width: 100%;
+  box-sizing: border-box;
+
+  @media (max-width: 480px) {
+    padding: ${foodChallengeTheme.spacing.md};
+  }
 `;
 
 const Form = styled.form`
@@ -45,6 +58,8 @@ const Label = styled.label`
 `;
 
 const Input = styled.input`
+  width: 100%;
+  box-sizing: border-box;
   padding: ${foodChallengeTheme.spacing.sm};
   border: 2px solid ${foodChallengeTheme.colors.secondary};
   border-radius: ${foodChallengeTheme.borderRadius.md};
@@ -61,6 +76,10 @@ const ButtonGroup = styled.div`
   gap: ${foodChallengeTheme.spacing.md};
   justify-content: flex-end;
   margin-top: ${foodChallengeTheme.spacing.md};
+
+  @media (max-width: 480px) {
+    flex-direction: column-reverse;
+  }
 `;
 
 const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
@@ -73,9 +92,14 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
   background-color: ${(props) =>
     props.variant === 'secondary' ? '#ccc' : foodChallengeTheme.colors.primary};
   color: ${(props) => (props.variant === 'secondary' ? '#333' : 'white')};
+  white-space: nowrap;
 
   &:hover {
     opacity: 0.8;
+  }
+
+  @media (max-width: 480px) {
+    width: 100%;
   }
 `;
 
@@ -173,7 +197,7 @@ export const CreateTrackerModalSimplified: React.FC<Props> = ({
       {isOpen && (
         <Backdrop onClick={handleClose}>
           <ModalWrapper onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-            <Card style={{ minWidth: '400px', maxWidth: '500px' }}>
+            <ModalCard>
               <h2>Create New Tracker</h2>
 
               {error && (
@@ -271,7 +295,7 @@ export const CreateTrackerModalSimplified: React.FC<Props> = ({
                   </Button>
                 </ButtonGroup>
               </Form>
-            </Card>
+            </ModalCard>
           </ModalWrapper>
         </Backdrop>
       )}

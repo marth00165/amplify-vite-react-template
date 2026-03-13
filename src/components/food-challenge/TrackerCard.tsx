@@ -34,6 +34,7 @@ const StyledCard = styled(Card)`
   flex-direction: column;
   height: 100%;
   padding-bottom: 0 !important;
+  min-width: 0;
 
   &:hover {
     transform: translateY(-2px);
@@ -44,8 +45,8 @@ const StyledCard = styled(Card)`
 const CardContent = styled.div`
   flex: 1;
   overflow-y: auto;
-  padding-right: ${foodChallengeTheme.spacing.sm};
   padding: ${foodChallengeTheme.spacing.lg};
+  overflow-x: hidden;
 
   &::-webkit-scrollbar {
     width: 4px;
@@ -62,6 +63,10 @@ const CardContent = styled.div`
     &:hover {
       background: ${foodChallengeTheme.colors.textSecondary};
     }
+  }
+
+  @media (max-width: 480px) {
+    padding: ${foodChallengeTheme.spacing.md};
   }
 `;
 
@@ -97,12 +102,18 @@ const TrackerHeader = styled.div`
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: ${foodChallengeTheme.spacing.md};
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    gap: ${foodChallengeTheme.spacing.sm};
+  }
 `;
 
 const HeaderBadges = styled.div`
   display: flex;
   gap: ${foodChallengeTheme.spacing.sm};
   align-items: center;
+  flex-wrap: wrap;
 `;
 
 const TrackerName = styled.h3`
@@ -113,6 +124,12 @@ const TrackerName = styled.h3`
   line-height: 1.3;
   flex: 1;
   margin-right: ${foodChallengeTheme.spacing.md};
+  min-width: 0;
+  overflow-wrap: anywhere;
+
+  @media (max-width: 600px) {
+    margin-right: 0;
+  }
 `;
 
 const InfoIconButton = styled.button`
@@ -155,6 +172,12 @@ const InfoRow = styled.div`
   &:last-child {
     margin-bottom: 0;
   }
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: ${foodChallengeTheme.spacing.xs};
+  }
 `;
 
 const InfoLabel = styled.span`
@@ -166,6 +189,13 @@ const InfoValue = styled.span`
   color: ${foodChallengeTheme.colors.textPrimary};
   font-weight: 600;
   font-size: ${foodChallengeTheme.typography.body.fontSize};
+  min-width: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+
+  @media (max-width: 600px) {
+    text-align: left;
+  }
 `;
 
 const ProgressSection = styled.div`
@@ -177,6 +207,12 @@ const ProgressLabel = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: ${foodChallengeTheme.spacing.sm};
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: ${foodChallengeTheme.spacing.xs};
+  }
 `;
 
 const ProgressText = styled.span`
@@ -193,6 +229,12 @@ const ProgressValue = styled.span.withConfig({
     props.isGoalMet
       ? foodChallengeTheme.colors.secondary
       : foodChallengeTheme.colors.textPrimary};
+  text-align: right;
+  overflow-wrap: anywhere;
+
+  @media (max-width: 600px) {
+    text-align: left;
+  }
 `;
 
 const RecentActivity = styled.div`
@@ -247,6 +289,7 @@ const ActivityLog = styled.div`
   font-size: ${foodChallengeTheme.typography.caption.fontSize};
   color: ${foodChallengeTheme.colors.textSecondary};
   line-height: 1.4;
+  overflow-wrap: anywhere;
 `;
 
 export const TrackerCard: React.FC<TrackerCardProps> = ({
