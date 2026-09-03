@@ -24,6 +24,7 @@ import { FindTrackers } from './pages/FindTrackers';
 import { FollowingPage } from './pages/FollowingPage';
 import TrackerPublicPage from './pages/TrackerPublicPage';
 import MarketCycleAnalyzer from './pages/MarketCycleAnalyzer';
+import Samelle from './pages/Samelle';
 
 export default function App() {
   return (
@@ -48,6 +49,7 @@ export default function App() {
             path='/marketCycleAnalyzer'
             element={<MarketCycleAnalyzer />}
           />
+          <Route path='/samelle' element={<Samelle />} />
           <Route
             path='/foodChallenge/tracker/:trackerId'
             element={<TrackerPublicPage />}

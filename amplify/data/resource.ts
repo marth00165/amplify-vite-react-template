@@ -1,6 +1,16 @@
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
+import { sendSamelleHi } from '../functions/send-samelle-hi/resource';
 
 const schema = a.schema({
+  sendSamelleHi: a
+    .mutation()
+    .arguments({
+      code: a.string().required(),
+    })
+    .returns(a.string())
+    .authorization((allow) => [allow.publicApiKey()])
+    .handler(a.handler.function(sendSamelleHi)),
+
   User: a
     .model({
       cognitoId: a.string().required(),
@@ -240,6 +250,9 @@ export type Schema = ClientSchema<typeof schema>;
 
 export const data = defineData({
   schema,
+  functions: {
+    sendSamelleHi,
+  },
   authorizationModes: {
     defaultAuthorizationMode: 'userPool',
     apiKeyAuthorizationMode: {
