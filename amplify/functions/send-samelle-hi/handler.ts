@@ -10,7 +10,6 @@ const commandMessages = {
   hi: 'Samelle says hi',
   bye: 'Samelle says bye',
   'ice-cream': 'Samelle wants to get ice cream',
-  'miss-me': 'Samelle misses you',
   stop: 'Samelle says stop',
 } as const;
 

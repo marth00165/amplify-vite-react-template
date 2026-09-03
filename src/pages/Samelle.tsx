@@ -4,7 +4,8 @@ import {
   FiCheck,
   FiCoffee,
   FiCopy,
-  FiHeart,
+  FiExternalLink,
+  FiInstagram,
   FiLock,
   FiLogOut,
   FiMessageCircle,
@@ -167,12 +168,20 @@ const commands = [
   { action: 'hi', label: 'Click to say hi', icon: FiMessageCircle, accent: '#64f2c8' },
   { action: 'bye', label: 'Click to say bye', icon: FiLogOut, accent: '#ff8fa3' },
   { action: 'ice-cream', label: 'Click to get ice cream', icon: FiCoffee, accent: '#ffd166' },
-  { action: 'miss-me', label: 'Click if you miss me', icon: FiHeart, accent: '#ff7096' },
+  {
+    href: 'https://www.instagram.com/elcurry7',
+    label: "Click here to learn something you would've never found out about me",
+    icon: FiInstagram,
+    accent: '#ff7096',
+  },
   { action: 'backflip', label: 'Click to make me do a backflip', icon: FiRefreshCcw, accent: '#75c9ff' },
   { action: 'stop', label: 'Click to make me stop', icon: FiSlash, accent: '#ff7657' },
 ] as const;
 
-type CommandAction = (typeof commands)[number]['action'];
+type CommandAction = Extract<
+  (typeof commands)[number],
+  { action: string }
+>['action'];
 
 const VISIT_KEY = 'samelle-challenge-rotation-v2';
 const SAME_VISIT_WINDOW_MS = 5000;
@@ -672,6 +681,24 @@ export default function Samelle() {
           <CommandGrid>
             {commands.map((command) => {
               const Icon = command.icon;
+
+              if ('href' in command) {
+                return (
+                  <CommandButton
+                    as='a'
+                    $accent={command.accent}
+                    href={command.href}
+                    key={command.href}
+                    rel='noreferrer'
+                    target='_blank'
+                  >
+                    <Icon aria-hidden size={22} />
+                    <span>{command.label}</span>
+                    <FiExternalLink aria-hidden />
+                  </CommandButton>
+                );
+              }
+
               const wasSent = sentActions.has(command.action);
               const isBackflip = command.action === 'backflip';
 
