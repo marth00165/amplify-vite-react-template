@@ -50,15 +50,17 @@ const PageDescription = styled.p`
 
 const TrackersGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: ${foodChallengeTheme.spacing.lg};
+  align-items: start;
 
-  @media (max-width: 900px) {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   @media (max-width: 768px) {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 420px);
+    justify-content: center;
   }
 `;
 
