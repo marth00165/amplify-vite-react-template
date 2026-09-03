@@ -10,6 +10,11 @@ const backend = defineBackend({
   sendSamelleHi,
 });
 
+// Replace the expired V1 key without replacing the AppSync API or its tables.
+backend.data.resources.cfnResources.cfnApiKey?.overrideLogicalId(
+  'amplifyDataGraphQLAPIDefaultApiKeyV2'
+);
+
 backend.sendSamelleHi.resources.lambda.addToRolePolicy(
   new PolicyStatement({
     actions: ['ses:SendEmail', 'ses:SendRawEmail'],
