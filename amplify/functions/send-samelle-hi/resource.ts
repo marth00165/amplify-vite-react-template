@@ -6,7 +6,7 @@ export const sendSamelleHi = defineFunction({
   runtime: 20,
   timeoutSeconds: 10,
   environment: {
-    EMAIL_TO: 'elcurry@melocodesolutions.com',
-    EMAIL_FROM: 'elcurry@melocodesolutions.com',
+    EMAIL_TO: 'rohit.pratti@gmail.com',
+    EMAIL_FROM: 'rohit.pratti@gmail.com',
   },
 });
