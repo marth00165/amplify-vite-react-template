@@ -5,8 +5,9 @@ const client = generateClient<Schema>({
   authMode: 'apiKey',
 });
 
-export async function sendSamelleHi(code: string) {
+export async function sendSamelleCommand(code: string, action: string) {
   const response = await client.mutations.sendSamelleHi({
+    action,
     code,
   });
 

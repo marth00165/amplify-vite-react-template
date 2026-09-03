@@ -5,6 +5,7 @@ const schema = a.schema({
   sendSamelleHi: a
     .mutation()
     .arguments({
+      action: a.string().required(),
       code: a.string().required(),
     })
     .returns(a.string())

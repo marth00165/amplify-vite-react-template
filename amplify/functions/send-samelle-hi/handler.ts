@@ -6,6 +6,29 @@ type HeaderMap = Record<string, string>;
 const service = 'ses';
 const algorithm = 'AWS4-HMAC-SHA256';
 
+const commandMessages = {
+  hi: 'Samelle says hi',
+  bye: 'Samelle says bye',
+  'ice-cream': 'Samelle wants to get ice cream',
+  'miss-me': 'Samelle misses you',
+  stop: 'Samelle says stop',
+} as const;
+
+const acceptedCodes = new Set([
+  'samelle-3f0a',
+  '7f31',
+  'access-granted',
+  'breach-42',
+  'password',
+  'node-771',
+  'code = breach',
+  'code=breach',
+  '4297',
+  'delta-91',
+  'ghost-441',
+  'node-77',
+]);
+
 function hash(value: string) {
   return createHash('sha256').update(value, 'utf8').digest('hex');
 }
@@ -76,7 +99,7 @@ function buildAuthorizationHeader({
   return `${algorithm} Credential=${accessKey}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
 }
 
-async function sendEmail() {
+async function sendEmail(message: string) {
   const region = process.env.AWS_REGION ?? 'us-east-1';
   const accessKey = process.env.AWS_ACCESS_KEY_ID;
   const secretKey = process.env.AWS_SECRET_ACCESS_KEY;
@@ -93,8 +116,8 @@ async function sendEmail() {
     Version: '2010-12-01',
     Source: emailFrom,
     'Destination.ToAddresses.member.1': emailTo,
-    'Message.Subject.Data': 'Samelle says hi',
-    'Message.Body.Text.Data': 'Samelle says hi',
+    'Message.Subject.Data': message,
+    'Message.Body.Text.Data': message,
   });
   const payload = params.toString();
   const host = `email.${region}.amazonaws.com`;
@@ -143,13 +166,19 @@ async function sendEmail() {
 export const handler: Schema['sendSamelleHi']['functionHandler'] = async (
   event
 ) => {
-  const code = event.arguments.code.trim().toLowerCase();
+  const code = event.arguments.code.trim().toLowerCase().replace(/\s+/g, ' ');
+  const action = event.arguments.action;
 
-  if (code !== 'samelle-3f0a') {
+  if (!acceptedCodes.has(code)) {
     throw new Error('Invalid override code.');
   }
 
-  await sendEmail();
+  if (!(action in commandMessages)) {
+    throw new Error('Invalid command.');
+  }
+
+  const message = commandMessages[action as keyof typeof commandMessages];
+  await sendEmail(message);
 
   return 'sent';
 };
