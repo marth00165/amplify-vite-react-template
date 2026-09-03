@@ -108,13 +108,6 @@ const SidePanel = styled.aside`
   background: rgba(255, 255, 255, 0.035);
 `;
 
-const HintList = styled.ul`
-  color: #c9d8d5;
-  line-height: 1.65;
-  margin: 0 0 1.5rem;
-  padding-left: 1.15rem;
-`;
-
 const Form = styled.form`
   display: grid;
   gap: 0.8rem;
@@ -206,18 +199,14 @@ export default function Samelle() {
   const [sent, setSent] = useState(false);
 
   const terminalText = useMemo(
-    () => `$ incident-notes --case 7
+    () => `$ access-node --challenge
 
-Recovered token:
+Encrypted artifact:
 ${token}
 
-Objective:
-1. Inspect the middle segment like a JWT payload.
-2. Follow the kid.
-3. Pair the decoded payload with cn.
+STATUS: LOCKED
 
-Submit format:
-<decoded-payload>-<cn>`,
+Solve the challenge to reveal a secret message.`,
     []
   );
 
@@ -235,7 +224,7 @@ Submit format:
       return;
     }
 
-    setMessage('Access denied. The packet is honest, but only after decoding.');
+    setMessage('Access denied. Try again.');
   };
 
   const sayHi = async () => {
@@ -264,8 +253,7 @@ Submit format:
           </Header>
           <Title>Samelle Access Node</Title>
           <Copy>
-            A small auth gateway was left with one stripped token and a noisy
-            clue trail. Recover the override code and unlock the message.
+            Solve the challenge to unlock a secret message.
           </Copy>
           <CodeBlock>{terminalText}</CodeBlock>
         </TerminalPanel>
@@ -276,19 +264,13 @@ Submit format:
             <Kicker>operator panel</Kicker>
           </Header>
 
-          <HintList>
-            <li>JWTs are three dot-separated segments.</li>
-            <li>The middle segment is base64url encoded JSON.</li>
-            <li>The key id tells you what to reverse.</li>
-          </HintList>
-
           <Form onSubmit={checkAnswer}>
             <Label htmlFor='override-code'>Override code</Label>
             <Input
               autoComplete='off'
               id='override-code'
               onChange={(event) => setAnswer(event.target.value)}
-              placeholder='decoded-cn'
+              placeholder='Enter access code'
               value={answer}
             />
             <Button type='submit'>
@@ -297,7 +279,7 @@ Submit format:
             </Button>
             <GhostButton onClick={copyPacket} type='button'>
               <FiCopy aria-hidden />
-              Copy token
+              Copy artifact
             </GhostButton>
           </Form>
 
