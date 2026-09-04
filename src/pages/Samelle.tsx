@@ -173,13 +173,19 @@ checksum: irrelevant`,
   },
 ];
 
-type CommandAction = 'hi' | 'ice-cream' | 'stop';
+type CommandAction = 'hi' | 'starbucks' | 'stop';
 
 const commands = [
   { kind: 'email', action: 'hi', label: 'Click to say hi', icon: FiMessageCircle, accent: '#64f2c8' },
   { kind: 'thoughts', label: 'Solve to unlock my thoughts', icon: FaXTwitter, accent: '#f4f7f6' },
   { kind: 'food', label: 'Click this button for food', icon: FiShoppingBag, accent: '#ffcc66' },
-  { kind: 'email', action: 'ice-cream', label: 'Click to get ice cream', icon: FiCoffee, accent: '#ffd166' },
+  {
+    kind: 'email',
+    action: 'starbucks',
+    label: 'Click this to get a free Starbucks coffee card',
+    icon: FiCoffee,
+    accent: '#0fa36b',
+  },
   {
     kind: 'link',
     href: 'https://www.instagram.com/elcurry7',

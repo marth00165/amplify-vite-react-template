@@ -8,7 +8,7 @@ const algorithm = 'AWS4-HMAC-SHA256';
 
 const commandMessages = {
   hi: 'Samelle says hi',
-  'ice-cream': 'Samelle wants to get ice cream',
+  starbucks: 'Samelle wants a free Starbucks coffee card',
   stop: 'Samelle says stop',
 } as const;
 
