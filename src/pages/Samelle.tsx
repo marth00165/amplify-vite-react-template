@@ -10,7 +10,6 @@ import {
   FiInstagram,
   FiKey,
   FiLock,
-  FiLogOut,
   FiMessageCircle,
   FiRefreshCcw,
   FiSend,
@@ -174,13 +173,12 @@ checksum: irrelevant`,
   },
 ];
 
-type CommandAction = 'hi' | 'bye' | 'ice-cream' | 'stop';
+type CommandAction = 'hi' | 'ice-cream' | 'stop';
 
 const commands = [
   { kind: 'email', action: 'hi', label: 'Click to say hi', icon: FiMessageCircle, accent: '#64f2c8' },
   { kind: 'thoughts', label: 'Solve to unlock my thoughts', icon: FaXTwitter, accent: '#f4f7f6' },
   { kind: 'food', label: 'Click this button for food', icon: FiShoppingBag, accent: '#ffcc66' },
-  { kind: 'email', action: 'bye', label: 'Click to say bye', icon: FiLogOut, accent: '#ff8fa3' },
   { kind: 'email', action: 'ice-cream', label: 'Click to get ice cream', icon: FiCoffee, accent: '#ffd166' },
   {
     kind: 'link',
