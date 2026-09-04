@@ -1,21 +1,31 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import styled, { css, keyframes } from 'styled-components';
 import {
+  FiCalendar,
   FiCheck,
+  FiClock,
   FiCoffee,
   FiCopy,
   FiExternalLink,
   FiInstagram,
+  FiKey,
   FiLock,
   FiLogOut,
   FiMessageCircle,
   FiRefreshCcw,
   FiSend,
   FiShield,
+  FiShoppingBag,
   FiSlash,
   FiTerminal,
+  FiX,
 } from 'react-icons/fi';
-import { sendSamelleCommand } from '../api/samelle';
+import { FaXTwitter } from 'react-icons/fa6';
+import samelleFoodPhoto from '../assets/samelle-food-photo.jpg';
+import {
+  sendSamelleCommand,
+  sendSamelleFoodRequest,
+} from '../api/samelle';
 
 type Challenge = {
   id: string;
@@ -164,27 +174,84 @@ checksum: irrelevant`,
   },
 ];
 
+type CommandAction = 'hi' | 'bye' | 'ice-cream' | 'stop';
+
 const commands = [
-  { action: 'hi', label: 'Click to say hi', icon: FiMessageCircle, accent: '#64f2c8' },
-  { action: 'bye', label: 'Click to say bye', icon: FiLogOut, accent: '#ff8fa3' },
-  { action: 'ice-cream', label: 'Click to get ice cream', icon: FiCoffee, accent: '#ffd166' },
+  { kind: 'email', action: 'hi', label: 'Click to say hi', icon: FiMessageCircle, accent: '#64f2c8' },
+  { kind: 'thoughts', label: 'Solve to unlock my thoughts', icon: FaXTwitter, accent: '#f4f7f6' },
+  { kind: 'food', label: 'Click this button for food', icon: FiShoppingBag, accent: '#ffcc66' },
+  { kind: 'email', action: 'bye', label: 'Click to say bye', icon: FiLogOut, accent: '#ff8fa3' },
+  { kind: 'email', action: 'ice-cream', label: 'Click to get ice cream', icon: FiCoffee, accent: '#ffd166' },
   {
+    kind: 'link',
     href: 'https://www.instagram.com/elcurry7',
     label: "Click here to learn something you would've never found out about me",
     icon: FiInstagram,
     accent: '#ff7096',
   },
-  { action: 'backflip', label: 'Click to make me do a backflip', icon: FiRefreshCcw, accent: '#75c9ff' },
-  { action: 'stop', label: 'Click to make me stop', icon: FiSlash, accent: '#ff7657' },
+  { kind: 'backflip', label: 'Click to make me do a backflip', icon: FiRefreshCcw, accent: '#75c9ff' },
+  { kind: 'email', action: 'stop', label: 'Click to make me stop', icon: FiSlash, accent: '#ff7657' },
 ] as const;
 
-type CommandAction = Extract<
-  (typeof commands)[number],
-  { action: string }
->['action'];
-
 const VISIT_KEY = 'samelle-challenge-rotation-v2';
+const COMPLETED_CHALLENGES_KEY = 'samelle-completed-challenges-v1';
+const THOUGHTS_UNLOCKED_KEY = 'samelle-thoughts-unlocked-v1';
 const SAME_VISIT_WINDOW_MS = 5000;
+
+function readCompletedChallenges() {
+  if (typeof window === 'undefined') return new Set<string>();
+
+  try {
+    const stored = JSON.parse(
+      window.localStorage.getItem(COMPLETED_CHALLENGES_KEY) ?? '[]'
+    );
+
+    return new Set<string>(Array.isArray(stored) ? stored : []);
+  } catch {
+    return new Set<string>();
+  }
+}
+
+function rememberCompletedChallenge(challengeId: string) {
+  const completed = readCompletedChallenges();
+  completed.add(challengeId);
+  window.localStorage.setItem(
+    COMPLETED_CHALLENGES_KEY,
+    JSON.stringify([...completed])
+  );
+}
+
+function chooseSecretChallenge(currentChallengeId: string) {
+  const completed = readCompletedChallenges();
+  const currentIndex = challenges.findIndex(
+    (candidate) => candidate.id === currentChallengeId
+  );
+  const rotatedChallenges = challenges.map(
+    (_, offset) => challenges[(currentIndex + offset + 1) % challenges.length]
+  );
+
+  return (
+    rotatedChallenges.find((candidate) => !completed.has(candidate.id)) ??
+    rotatedChallenges[0] ??
+    challenges[0]
+  );
+}
+
+function hasUnlockedThoughts() {
+  return (
+    typeof window !== 'undefined' &&
+    window.localStorage.getItem(THOUGHTS_UNLOCKED_KEY) === 'true'
+  );
+}
+
+function getTodayForInput() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
 
 function chooseChallengeIndex() {
   if (typeof window === 'undefined') return 0;
@@ -439,7 +506,8 @@ const Message = styled.p<{ $tone: 'error' | 'success' }>`
 
 const CommandScreen = styled.main`
   min-height: 100svh;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   position: relative;
   color: #f8fbfa;
   display: grid;
@@ -561,6 +629,7 @@ const CommandButton = styled.button<{ $accent: string }>`
   min-height: 5.5rem;
   padding: 1rem;
   text-align: left;
+  text-decoration: none;
   transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
 
   > svg:first-child { color: ${({ $accent }) => $accent}; }
@@ -576,6 +645,184 @@ const CommandButton = styled.button<{ $accent: string }>`
     cursor: not-allowed;
     opacity: 0.52;
   }
+`;
+
+const ModalBackdrop = styled.div`
+  align-items: center;
+  background: rgba(3, 5, 7, 0.86);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 1rem;
+  position: fixed;
+  z-index: 20;
+`;
+
+const ModalPanel = styled.section`
+  background: #0d1115;
+  border: 1px solid rgba(100, 242, 200, 0.38);
+  border-radius: 8px;
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.72);
+  color: #f8fbfa;
+  margin: auto;
+  max-width: 760px;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+`;
+
+const ModalHeader = styled.header`
+  align-items: flex-start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding: 1.35rem 1.35rem 0;
+`;
+
+const ModalKicker = styled.div`
+  align-items: center;
+  color: #64f2c8;
+  display: flex;
+  font-size: 0.74rem;
+  font-weight: 800;
+  gap: 0.45rem;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.45rem;
+  text-transform: uppercase;
+`;
+
+const ModalTitle = styled.h2`
+  font-size: clamp(1.55rem, 4vw, 2.4rem);
+  line-height: 1.05;
+  margin: 0;
+`;
+
+const ModalClose = styled.button`
+  align-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  color: #f8fbfa;
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 2.5rem;
+  justify-content: center;
+  width: 2.5rem;
+
+  svg {
+    flex: 0 0 20px;
+  }
+
+  &:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.14);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+`;
+
+const SecretBody = styled.div`
+  padding: 1.35rem;
+`;
+
+const SecretCopy = styled.p`
+  color: #b8c6c2;
+  line-height: 1.6;
+  margin: 0 0 1rem;
+`;
+
+const SecretArtifact = styled.pre`
+  background: #07090b;
+  border: 1px solid rgba(100, 242, 200, 0.22);
+  border-radius: 6px;
+  color: #d8fff6;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin: 0 0 1rem;
+  max-height: 16rem;
+  overflow: auto;
+  padding: 1rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+`;
+
+const ModalForm = styled.form`
+  display: grid;
+  gap: 0.9rem;
+`;
+
+const Field = styled.div`
+  display: grid;
+  gap: 0.45rem;
+`;
+
+const FieldLabel = styled.label`
+  align-items: center;
+  color: #edf5f2;
+  display: flex;
+  font-size: 0.9rem;
+  font-weight: 750;
+  gap: 0.45rem;
+`;
+
+const ModalInput = styled(Input)`
+  color-scheme: dark;
+  min-width: 0;
+  width: 100%;
+`;
+
+const FoodBody = styled.div`
+  display: grid;
+  gap: 1.35rem;
+  grid-template-columns: minmax(180px, 0.72fr) minmax(0, 1.28fr);
+  padding: 1.35rem;
+
+  @media (max-width: 620px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const FoodPhoto = styled.img`
+  aspect-ratio: 3 / 4;
+  border-radius: 6px;
+  height: 100%;
+  max-height: 27rem;
+  object-fit: cover;
+  object-position: center;
+  width: 100%;
+
+  @media (max-width: 620px) {
+    aspect-ratio: 16 / 10;
+    max-height: 14rem;
+    object-position: center 58%;
+  }
+`;
+
+const FoodCopy = styled.p`
+  color: #b8c6c2;
+  line-height: 1.55;
+  margin: 0 0 1rem;
+`;
+
+const DateTimeFields = styled.div`
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  @media (max-width: 440px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const ModalStatus = styled.p<{ $tone?: 'error' | 'success' }>`
+  color: ${({ $tone }) =>
+    $tone === 'error' ? '#ffb3bd' : $tone === 'success' ? '#95f0ce' : '#b8c6c2'};
+  margin: 0;
+  min-height: 1.4rem;
 `;
 
 const Transmission = styled.p`
@@ -595,12 +842,48 @@ export default function Samelle() {
   const [sentActions, setSentActions] = useState<Set<CommandAction>>(new Set());
   const [transmission, setTransmission] = useState('');
   const [isFlipping, setIsFlipping] = useState(false);
+  const [thoughtsUnlocked, setThoughtsUnlocked] = useState(hasUnlockedThoughts);
+  const [secretPuzzleOpen, setSecretPuzzleOpen] = useState(false);
+  const [secretAnswer, setSecretAnswer] = useState('');
+  const [secretMessage, setSecretMessage] = useState('');
+  const [secretChecking, setSecretChecking] = useState(false);
+  const [foodFormOpen, setFoodFormOpen] = useState(false);
+  const [foodChoice, setFoodChoice] = useState('');
+  const [foodDate, setFoodDate] = useState('');
+  const [foodTime, setFoodTime] = useState('');
+  const [foodSending, setFoodSending] = useState(false);
+  const [foodSent, setFoodSent] = useState(false);
+  const [foodStatus, setFoodStatus] = useState('');
   const challenge = challenges[challengeIndex];
+  const secretChallenge = useMemo(
+    () => chooseSecretChallenge(challenge.id),
+    [challenge.id]
+  );
 
   const terminalText = useMemo(
     () => `$ access-node --challenge ${challenge.caseNumber}\n\nEncrypted artifact:\n${challenge.artifact}\n\nSTATUS: LOCKED`,
     [challenge]
   );
+
+  useEffect(() => {
+    if (!secretPuzzleOpen && !foodFormOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || foodSending) return;
+
+      setSecretPuzzleOpen(false);
+      setFoodFormOpen(false);
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', closeOnEscape);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [foodFormOpen, foodSending, secretPuzzleOpen]);
 
   const copyArtifact = async () => {
     await navigator.clipboard.writeText(challenge.artifact);
@@ -616,6 +899,7 @@ export default function Samelle() {
       const submittedHash = await hashAnswer(normalized);
 
       if (challenge.answerHashes.includes(submittedHash)) {
+        rememberCompletedChallenge(challenge.id);
         setSolvedCode(normalized);
         setMessage('');
         setSolved(true);
@@ -651,6 +935,10 @@ export default function Samelle() {
     setMessage('');
     setTransmission('');
     setSentActions(new Set());
+    setSecretPuzzleOpen(false);
+    setFoodFormOpen(false);
+    setFoodSent(false);
+    setFoodStatus('');
   };
 
   const flipPanel = () => {
@@ -658,6 +946,57 @@ export default function Samelle() {
 
     setIsFlipping(true);
     window.setTimeout(() => setIsFlipping(false), 680);
+  };
+
+  const checkSecretAnswer = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+    setSecretChecking(true);
+    const normalized = normalizeAnswer(secretAnswer);
+
+    try {
+      const submittedHash = await hashAnswer(normalized);
+
+      if (secretChallenge.answerHashes.includes(submittedHash)) {
+        rememberCompletedChallenge(secretChallenge.id);
+        window.localStorage.setItem(THOUGHTS_UNLOCKED_KEY, 'true');
+        setThoughtsUnlocked(true);
+        setSecretPuzzleOpen(false);
+        setSecretAnswer('');
+        setSecretMessage('');
+        setTransmission('Thought channel unlocked.');
+        return;
+      }
+
+      setSecretMessage('Access denied. Try again.');
+    } finally {
+      setSecretChecking(false);
+    }
+  };
+
+  const submitFoodRequest = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+    setFoodSending(true);
+    setFoodStatus('Sending your order to Rohit...');
+
+    try {
+      await sendSamelleFoodRequest(solvedCode, {
+        food: foodChoice,
+        date: foodDate,
+        time: foodTime,
+      });
+      setFoodSent(true);
+      setFoodStatus('Food request sent. Rohit has the details.');
+      setTransmission('Food request received. Rohit has been notified.');
+    } catch (error) {
+      console.error('Failed to send Samelle food request:', error);
+      setFoodStatus('Could not send the request. Try again in a moment.');
+    } finally {
+      setFoodSending(false);
+    }
   };
 
   if (solved) {
@@ -682,7 +1021,7 @@ export default function Samelle() {
             {commands.map((command) => {
               const Icon = command.icon;
 
-              if ('href' in command) {
+              if (command.kind === 'link') {
                 return (
                   <CommandButton
                     as='a'
@@ -699,27 +1038,82 @@ export default function Samelle() {
                 );
               }
 
+              if (command.kind === 'thoughts') {
+                if (thoughtsUnlocked) {
+                  return (
+                    <CommandButton
+                      as='a'
+                      $accent={command.accent}
+                      href='https://x.com/BrohitTv'
+                      key={command.kind}
+                      rel='noreferrer'
+                      target='_blank'
+                    >
+                      <Icon aria-hidden size={22} />
+                      <span>Open my thoughts</span>
+                      <FiExternalLink aria-hidden />
+                    </CommandButton>
+                  );
+                }
+
+                return (
+                  <CommandButton
+                    $accent={command.accent}
+                    key={command.kind}
+                    onClick={() => setSecretPuzzleOpen(true)}
+                    type='button'
+                  >
+                    <Icon aria-hidden size={22} />
+                    <span>{command.label}</span>
+                    <FiLock aria-hidden />
+                  </CommandButton>
+                );
+              }
+
+              if (command.kind === 'food') {
+                return (
+                  <CommandButton
+                    $accent={command.accent}
+                    disabled={foodSending || foodSent}
+                    key={command.kind}
+                    onClick={() => setFoodFormOpen(true)}
+                    type='button'
+                  >
+                    <Icon aria-hidden size={22} />
+                    <span>{foodSent ? 'Food request sent' : command.label}</span>
+                    <FiSend aria-hidden />
+                  </CommandButton>
+                );
+              }
+
+              if (command.kind === 'backflip') {
+                return (
+                  <CommandButton
+                    $accent={command.accent}
+                    disabled={isFlipping}
+                    key={command.kind}
+                    onClick={flipPanel}
+                    type='button'
+                  >
+                    <Icon aria-hidden size={22} />
+                    <span>{command.label}</span>
+                    <FiRefreshCcw aria-hidden />
+                  </CommandButton>
+                );
+              }
+
               const wasSent = sentActions.has(command.action);
-              const isBackflip = command.action === 'backflip';
 
               return (
                 <CommandButton
                   $accent={command.accent}
-                  disabled={
-                    sendingAction !== null ||
-                    (!isBackflip && wasSent) ||
-                    (isBackflip && isFlipping)
-                  }
+                  disabled={sendingAction !== null || wasSent}
                   key={command.action}
-                  onClick={() =>
-                    isBackflip ? flipPanel() : sendCommand(command.action)
-                  }
+                  onClick={() => sendCommand(command.action)}
                   type='button'
                 >
                   <Icon aria-hidden size={22} />
-                  <span>
-                    {!isBackflip && wasSent ? 'Command sent' : command.label}
-                  </span>
+                  <span>{wasSent ? 'Command sent' : command.label}</span>
                   <FiSend aria-hidden />
                 </CommandButton>
               );
@@ -728,6 +1122,190 @@ export default function Samelle() {
 
           <Transmission aria-live='polite'>{transmission}</Transmission>
         </CommandFrame>
+
+        {secretPuzzleOpen && (
+          <ModalBackdrop
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget && !secretChecking) {
+                setSecretPuzzleOpen(false);
+              }
+            }}
+          >
+            <ModalPanel
+              aria-labelledby='thought-vault-title'
+              aria-modal='true'
+              role='dialog'
+            >
+              <ModalHeader>
+                <div>
+                  <ModalKicker>
+                    <FiKey aria-hidden /> secret challenge //{' '}
+                    {secretChallenge.caseNumber}
+                  </ModalKicker>
+                  <ModalTitle id='thought-vault-title'>Thought vault</ModalTitle>
+                </div>
+                <ModalClose
+                  aria-label='Close thought vault'
+                  disabled={secretChecking}
+                  onClick={() => setSecretPuzzleOpen(false)}
+                  title='Close'
+                  type='button'
+                >
+                  <FiX aria-hidden size={20} />
+                </ModalClose>
+              </ModalHeader>
+              <SecretBody>
+                <SecretCopy>
+                  One more system stands between you and Rohit&apos;s unfiltered
+                  thoughts.
+                </SecretCopy>
+                <SecretArtifact>{secretChallenge.artifact}</SecretArtifact>
+                <ModalForm onSubmit={checkSecretAnswer}>
+                  <Field>
+                    <FieldLabel htmlFor='secret-override-code'>
+                      <FiKey aria-hidden /> Override code
+                    </FieldLabel>
+                    <ModalInput
+                      autoComplete='off'
+                      autoFocus
+                      id='secret-override-code'
+                      onChange={(event) => setSecretAnswer(event.target.value)}
+                      placeholder='Enter access code'
+                      value={secretAnswer}
+                    />
+                  </Field>
+                  <Button
+                    disabled={secretChecking || !secretAnswer.trim()}
+                    type='submit'
+                  >
+                    <FiLock aria-hidden />
+                    {secretChecking ? 'Checking...' : 'Unlock thoughts'}
+                  </Button>
+                  <ModalStatus
+                    $tone={secretMessage ? 'error' : undefined}
+                    aria-live='polite'
+                  >
+                    {secretMessage}
+                  </ModalStatus>
+                </ModalForm>
+              </SecretBody>
+            </ModalPanel>
+          </ModalBackdrop>
+        )}
+
+        {foodFormOpen && (
+          <ModalBackdrop
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget && !foodSending) {
+                setFoodFormOpen(false);
+              }
+            }}
+          >
+            <ModalPanel
+              aria-labelledby='food-request-title'
+              aria-modal='true'
+              role='dialog'
+            >
+              <ModalHeader>
+                <div>
+                  <ModalKicker>
+                    <FiShoppingBag aria-hidden /> food request
+                  </ModalKicker>
+                  <ModalTitle id='food-request-title'>What are we eating?</ModalTitle>
+                </div>
+                <ModalClose
+                  aria-label='Close food request'
+                  disabled={foodSending}
+                  onClick={() => setFoodFormOpen(false)}
+                  title='Close'
+                  type='button'
+                >
+                  <FiX aria-hidden size={20} />
+                </ModalClose>
+              </ModalHeader>
+              <FoodBody>
+                <FoodPhoto
+                  alt='Samelle taking a mirror selfie'
+                  src={samelleFoodPhoto}
+                />
+                <div>
+                  <FoodCopy>
+                    Pick what sounds good and when you want it. Rohit gets the
+                    coordinates.
+                  </FoodCopy>
+                  <ModalForm onSubmit={submitFoodRequest}>
+                    <Field>
+                      <FieldLabel htmlFor='food-choice'>
+                        <FiShoppingBag aria-hidden /> What kind of food do you
+                        want?
+                      </FieldLabel>
+                      <ModalInput
+                        autoComplete='off'
+                        autoFocus
+                        id='food-choice'
+                        maxLength={160}
+                        onChange={(event) => setFoodChoice(event.target.value)}
+                        placeholder='Sushi, tacos, pasta...'
+                        required
+                        value={foodChoice}
+                      />
+                    </Field>
+                    <DateTimeFields>
+                      <Field>
+                        <FieldLabel htmlFor='food-date'>
+                          <FiCalendar aria-hidden /> Pick a date
+                        </FieldLabel>
+                        <ModalInput
+                          id='food-date'
+                          min={getTodayForInput()}
+                          onChange={(event) => setFoodDate(event.target.value)}
+                          required
+                          type='date'
+                          value={foodDate}
+                        />
+                      </Field>
+                      <Field>
+                        <FieldLabel htmlFor='food-time'>
+                          <FiClock aria-hidden /> Pick a time
+                        </FieldLabel>
+                        <ModalInput
+                          id='food-time'
+                          onChange={(event) => setFoodTime(event.target.value)}
+                          required
+                          type='time'
+                          value={foodTime}
+                        />
+                      </Field>
+                    </DateTimeFields>
+                    <Button
+                      disabled={foodSending || foodSent}
+                      type='submit'
+                    >
+                      <FiSend aria-hidden />
+                      {foodSending
+                        ? 'Sending...'
+                        : foodSent
+                          ? 'Request sent'
+                          : 'Send food request'}
+                    </Button>
+                    <ModalStatus
+                      $tone={
+                        foodStatus.includes('Could not')
+                          ? 'error'
+                          : foodSent
+                            ? 'success'
+                            : undefined
+                      }
+                      aria-live='polite'
+                    >
+                      {foodStatus}
+                    </ModalStatus>
+                  </ModalForm>
+                </div>
+              </FoodBody>
+            </ModalPanel>
+          </ModalBackdrop>
+        )}
       </CommandScreen>
     );
   }

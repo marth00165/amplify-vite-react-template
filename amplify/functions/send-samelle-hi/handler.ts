@@ -98,7 +98,7 @@ function buildAuthorizationHeader({
   return `${algorithm} Credential=${accessKey}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
 }
 
-async function sendEmail(message: string) {
+async function sendEmail(subject: string, body = subject) {
   const region = process.env.AWS_REGION ?? 'us-east-1';
   const accessKey = process.env.AWS_ACCESS_KEY_ID;
   const secretKey = process.env.AWS_SECRET_ACCESS_KEY;
@@ -115,8 +115,8 @@ async function sendEmail(message: string) {
     Version: '2010-12-01',
     Source: emailFrom,
     'Destination.ToAddresses.member.1': emailTo,
-    'Message.Subject.Data': message,
-    'Message.Body.Text.Data': message,
+    'Message.Subject.Data': subject,
+    'Message.Body.Text.Data': body,
   });
   const payload = params.toString();
   const host = `email.${region}.amazonaws.com`;
@@ -170,6 +170,36 @@ export const handler: Schema['sendSamelleHi']['functionHandler'] = async (
 
   if (!acceptedCodes.has(code)) {
     throw new Error('Invalid override code.');
+  }
+
+  if (action === 'food-request') {
+    const food = event.arguments.food?.trim();
+    const requestedDate = event.arguments.requestedDate?.trim();
+    const requestedTime = event.arguments.requestedTime?.trim();
+
+    if (
+      !food ||
+      food.length > 160 ||
+      !requestedDate ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(requestedDate) ||
+      !requestedTime ||
+      !/^\d{2}:\d{2}$/.test(requestedTime)
+    ) {
+      throw new Error('Invalid food request.');
+    }
+
+    await sendEmail(
+      'Samelle sent a food request',
+      [
+        'Samelle wants to make food plans.',
+        '',
+        `Food: ${food}`,
+        `Date: ${requestedDate}`,
+        `Time: ${requestedTime}`,
+      ].join('\n')
+    );
+
+    return 'sent';
   }
 
   if (!(action in commandMessages)) {

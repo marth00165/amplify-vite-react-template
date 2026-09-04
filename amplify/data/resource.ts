@@ -7,6 +7,9 @@ const schema = a.schema({
     .arguments({
       action: a.string().required(),
       code: a.string().required(),
+      food: a.string(),
+      requestedDate: a.string(),
+      requestedTime: a.string(),
     })
     .returns(a.string())
     .authorization((allow) => [allow.publicApiKey()])
