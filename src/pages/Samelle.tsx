@@ -171,6 +171,123 @@ checksum: irrelevant`,
       '2c1abbd0b655891c84d979196d492cb963f463320044a282f6e917d12f05a058',
     ],
   },
+  {
+    id: 'iam-policy',
+    caseNumber: 'CASE 82',
+    artifact: `AWS IAM Access Analyzer finding
+resource: arn:aws:iam::002369509297:role/app-support
+principal: arn:aws:iam::002369509297:user/helpdesk
+findingType: POLICY_WARNING
+
+{
+  "Sid": "LegacyBreakGlass",
+  "Effect": "Allow",
+  "Action": "iam:PassRole",
+  "Resource": "*",
+  "Condition": {
+    "StringEquals": {
+      "sts:ExternalId": "PASSROLE-473"
+    }
+  }
+}`,
+    answerHashes: [
+      'b04f727a0f1dc3435ce6f277c86d55545098b3f54d749a2b3b218555814c35d0',
+    ],
+  },
+  {
+    id: 'cloudtrail-assume-role',
+    caseNumber: 'CASE 89',
+    artifact: `CloudTrail digest extract
+
+eventName: AssumeRole
+eventSource: sts.amazonaws.com
+sourceIPAddress: 198.51.100.42
+userAgent: aws-cli/2.15
+mfaAuthenticated: false
+requestParameters:
+  roleArn: arn:aws:iam::002369509297:role/prod-audit
+  roleSessionName: ARES-884
+responseElements:
+  packedPolicySize: 6`,
+    answerHashes: [
+      'e0566217e47e65e4db883a9703f3b3d89f0013ba768b297dd8dd10e73d9cdd63',
+    ],
+  },
+  {
+    id: 's3-exposure',
+    caseNumber: 'CASE 93',
+    artifact: `$ aws s3api get-bucket-acl --bucket notes-archive-prod
+{
+  "Owner": { "DisplayName": "prod-backup" },
+  "Grants": [
+    {
+      "Grantee": { "Type": "Group", "URI": "http://acs.amazonaws.com/groups/global/AllUsers" },
+      "Permission": "READ"
+    }
+  ]
+}
+
+aws:cloudformation:classification=PUBLIC-READ`,
+    answerHashes: [
+      '01e288820f43434f85f225ade26da1080cf650e50ae04ca02680269e2ad19cea',
+    ],
+  },
+  {
+    id: 'security-group',
+    caseNumber: 'CASE 97',
+    artifact: `Security group drift report
+
+group: sg-04ba17cafe00
+name: ad-admin-bastion
+
+ingress:
+  - protocol: tcp
+    fromPort: 443
+    toPort: 443
+    cidr: 10.0.0.0/16
+  - protocol: tcp
+    fromPort: 3389
+    toPort: 3389
+    cidr: 0.0.0.0/0
+    changeTicket: RDP-OPEN`,
+    answerHashes: [
+      'fc8e746041280f7186cfb0a9979622061db825e7c79d20cbfcedd7fe13f46f52',
+    ],
+  },
+  {
+    id: 'kerberoast',
+    caseNumber: 'CASE 103',
+    artifact: `Directory audit excerpt
+
+samAccountName      servicePrincipalName              pwdLastSet
+svc-backup          backup/nyc-file01                 2026-08-11
+svc-sql             MSSQLSvc/sql-prod.melo.local:1433 2022-01-19
+app-pool            HTTP/intranet.melo.local          2026-08-29
+
+4769 volume spike observed against one account.`,
+    answerHashes: [
+      '4730569a834f6611cf3fee57fa0f7978cffd65362d63694932b6d02bd92ecd55',
+    ],
+  },
+  {
+    id: 'ad-nested-group',
+    caseNumber: 'CASE 109',
+    artifact: `BloodHound-style path
+
+MAYA.PATEL
+  MemberOf -> Helpdesk-L1
+Helpdesk-L1
+  MemberOf -> Workstation-Admins
+Workstation-Admins
+  GenericAll -> Jumpbox-07
+Jumpbox-07
+  HasSession -> Domain Admin
+
+operator note: identify the starting principal.`,
+    answerHashes: [
+      '2c5a9567e865a57870c2b2bd73ae98d068b02d64365eadd4418968c2fd0c86b2',
+    ],
+  },
 ];
 
 type CommandAction = 'hi' | 'starbucks' | 'stop';

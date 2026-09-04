@@ -25,6 +25,12 @@ const acceptedCodes = new Set([
   'delta-91',
   'ghost-441',
   'node-77',
+  'passrole-473',
+  'ares-884',
+  'public-read',
+  'rdp-open',
+  'svc-sql',
+  'maya.patel',
 ]);
 
 function hash(value: string) {
