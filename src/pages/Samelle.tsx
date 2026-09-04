@@ -293,30 +293,75 @@ operator note: identify the starting principal.`,
 type CommandAction = 'hi' | 'starbucks' | 'stop';
 
 const commands = [
-  { kind: 'email', action: 'hi', label: 'Click to say hi', icon: FiMessageCircle, accent: '#64f2c8' },
-  { kind: 'thoughts', label: 'Solve to unlock my thoughts', icon: FaXTwitter, accent: '#f4f7f6' },
-  { kind: 'food', label: 'Click this button for food', icon: FiShoppingBag, accent: '#ffcc66' },
   {
+    id: 'hi',
+    kind: 'email',
+    action: 'hi',
+    lockedLabel: 'Solve to unlock say hi',
+    unlockedLabel: 'Click to say hi',
+    icon: FiMessageCircle,
+    accent: '#64f2c8',
+  },
+  {
+    id: 'thoughts',
+    kind: 'thoughts',
+    lockedLabel: 'Solve to unlock my thoughts',
+    unlockedLabel: 'Open my thoughts',
+    icon: FaXTwitter,
+    accent: '#f4f7f6',
+  },
+  {
+    id: 'food',
+    kind: 'food',
+    lockedLabel: 'Solve to unlock food plans',
+    unlockedLabel: 'Click this button for food',
+    icon: FiShoppingBag,
+    accent: '#ffcc66',
+  },
+  {
+    id: 'starbucks',
     kind: 'email',
     action: 'starbucks',
-    label: 'Click this to get a free Starbucks coffee card',
+    lockedLabel: 'Solve to unlock free Starbucks',
+    unlockedLabel: 'Click this to get a free Starbucks coffee card',
     icon: FiCoffee,
     accent: '#0fa36b',
   },
   {
+    id: 'instagram',
     kind: 'link',
     href: 'https://www.instagram.com/elcurry7',
-    label: "Click here to learn something you would've never found out about me",
+    lockedLabel: 'Solve to unlock something secret',
+    unlockedLabel: "Click here to learn something you would've never found out about me",
     icon: FiInstagram,
     accent: '#ff7096',
   },
-  { kind: 'backflip', label: 'Click to make me do a backflip', icon: FiRefreshCcw, accent: '#75c9ff' },
-  { kind: 'email', action: 'stop', label: 'Click to make me stop', icon: FiSlash, accent: '#ff7657' },
+  {
+    id: 'backflip',
+    kind: 'backflip',
+    lockedLabel: 'Solve to unlock backflip mode',
+    unlockedLabel: 'Click to make me do a backflip',
+    icon: FiRefreshCcw,
+    accent: '#75c9ff',
+  },
+  {
+    id: 'stop',
+    kind: 'email',
+    action: 'stop',
+    lockedLabel: 'Solve to unlock stop command',
+    unlockedLabel: 'Click to make me stop',
+    icon: FiSlash,
+    accent: '#ff7657',
+  },
 ] as const;
+
+type CommandConfig = (typeof commands)[number];
+type RewardId = CommandConfig['id'];
 
 const VISIT_KEY = 'samelle-challenge-rotation-v2';
 const COMPLETED_CHALLENGES_KEY = 'samelle-completed-challenges-v1';
 const THOUGHTS_UNLOCKED_KEY = 'samelle-thoughts-unlocked-v1';
+const REWARD_UNLOCKS_KEY = 'samelle-reward-unlocks-v1';
 const SAME_VISIT_WINDOW_MS = 5000;
 
 function readCompletedChallenges() {
@@ -342,26 +387,58 @@ function rememberCompletedChallenge(challengeId: string) {
   );
 }
 
-function chooseSecretChallenge(currentChallengeId: string) {
+function readUnlockedRewards() {
+  if (typeof window === 'undefined') return new Set<RewardId>();
+
+  try {
+    const stored = JSON.parse(
+      window.localStorage.getItem(REWARD_UNLOCKS_KEY) ?? '[]'
+    );
+    const rewardIds = new Set(commands.map((command) => command.id));
+    const unlocked = new Set<RewardId>(
+      Array.isArray(stored)
+        ? stored.filter((id): id is RewardId => rewardIds.has(id))
+        : []
+    );
+
+    if (window.localStorage.getItem(THOUGHTS_UNLOCKED_KEY) === 'true') {
+      unlocked.add('thoughts');
+    }
+
+    return unlocked;
+  } catch {
+    return new Set<RewardId>();
+  }
+}
+
+function rememberUnlockedReward(rewardId: RewardId) {
+  const unlocked = readUnlockedRewards();
+  unlocked.add(rewardId);
+  window.localStorage.setItem(
+    REWARD_UNLOCKS_KEY,
+    JSON.stringify([...unlocked])
+  );
+}
+
+function chooseRewardChallenge(currentChallengeId: string, rewardId: RewardId) {
   const completed = readCompletedChallenges();
   const currentIndex = challenges.findIndex(
     (candidate) => candidate.id === currentChallengeId
   );
+  const rewardIndex = commands.findIndex((command) => command.id === rewardId);
+  const startIndex = currentIndex + Math.max(rewardIndex, 0) + 1;
   const rotatedChallenges = challenges.map(
-    (_, offset) => challenges[(currentIndex + offset + 1) % challenges.length]
+    (_, offset) => challenges[(startIndex + offset) % challenges.length]
   );
 
   return (
-    rotatedChallenges.find((candidate) => !completed.has(candidate.id)) ??
+    rotatedChallenges.find(
+      (candidate) =>
+        candidate.id !== currentChallengeId && !completed.has(candidate.id)
+    ) ??
+    rotatedChallenges.find((candidate) => candidate.id !== currentChallengeId) ??
     rotatedChallenges[0] ??
     challenges[0]
-  );
-}
-
-function hasUnlockedThoughts() {
-  return (
-    typeof window !== 'undefined' &&
-    window.localStorage.getItem(THOUGHTS_UNLOCKED_KEY) === 'true'
   );
 }
 
@@ -963,8 +1040,8 @@ export default function Samelle() {
   const [sentActions, setSentActions] = useState<Set<CommandAction>>(new Set());
   const [transmission, setTransmission] = useState('');
   const [isFlipping, setIsFlipping] = useState(false);
-  const [thoughtsUnlocked, setThoughtsUnlocked] = useState(hasUnlockedThoughts);
-  const [secretPuzzleOpen, setSecretPuzzleOpen] = useState(false);
+  const [unlockedRewards, setUnlockedRewards] = useState(readUnlockedRewards);
+  const [unlockTarget, setUnlockTarget] = useState<CommandConfig | null>(null);
   const [secretAnswer, setSecretAnswer] = useState('');
   const [secretMessage, setSecretMessage] = useState('');
   const [secretChecking, setSecretChecking] = useState(false);
@@ -976,9 +1053,12 @@ export default function Samelle() {
   const [foodSent, setFoodSent] = useState(false);
   const [foodStatus, setFoodStatus] = useState('');
   const challenge = challenges[challengeIndex];
-  const secretChallenge = useMemo(
-    () => chooseSecretChallenge(challenge.id),
-    [challenge.id]
+  const rewardChallenge = useMemo(
+    () =>
+      unlockTarget
+        ? chooseRewardChallenge(challenge.id, unlockTarget.id)
+        : challenges[0],
+    [challenge.id, unlockTarget]
   );
 
   const terminalText = useMemo(
@@ -987,13 +1067,13 @@ export default function Samelle() {
   );
 
   useEffect(() => {
-    if (!secretPuzzleOpen && !foodFormOpen) return;
+    if (!unlockTarget && !foodFormOpen) return;
 
     const previousOverflow = document.body.style.overflow;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== 'Escape' || foodSending) return;
 
-      setSecretPuzzleOpen(false);
+      setUnlockTarget(null);
       setFoodFormOpen(false);
     };
 
@@ -1004,7 +1084,7 @@ export default function Samelle() {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener('keydown', closeOnEscape);
     };
-  }, [foodFormOpen, foodSending, secretPuzzleOpen]);
+  }, [foodFormOpen, foodSending, unlockTarget]);
 
   const copyArtifact = async () => {
     await navigator.clipboard.writeText(challenge.artifact);
@@ -1056,7 +1136,7 @@ export default function Samelle() {
     setMessage('');
     setTransmission('');
     setSentActions(new Set());
-    setSecretPuzzleOpen(false);
+    setUnlockTarget(null);
     setFoodFormOpen(false);
     setFoodSent(false);
     setFoodStatus('');
@@ -1079,14 +1159,17 @@ export default function Samelle() {
     try {
       const submittedHash = await hashAnswer(normalized);
 
-      if (secretChallenge.answerHashes.includes(submittedHash)) {
-        rememberCompletedChallenge(secretChallenge.id);
-        window.localStorage.setItem(THOUGHTS_UNLOCKED_KEY, 'true');
-        setThoughtsUnlocked(true);
-        setSecretPuzzleOpen(false);
+      if (unlockTarget && rewardChallenge.answerHashes.includes(submittedHash)) {
+        rememberCompletedChallenge(rewardChallenge.id);
+        rememberUnlockedReward(unlockTarget.id);
+        if (unlockTarget.id === 'thoughts') {
+          window.localStorage.setItem(THOUGHTS_UNLOCKED_KEY, 'true');
+        }
+        setUnlockedRewards((current) => new Set(current).add(unlockTarget.id));
+        setUnlockTarget(null);
         setSecretAnswer('');
         setSecretMessage('');
-        setTransmission('Thought channel unlocked.');
+        setTransmission(`${unlockTarget.unlockedLabel} unlocked.`);
         return;
       }
 
@@ -1130,7 +1213,9 @@ export default function Samelle() {
                 <FiShield aria-hidden /> God mode unlocked
               </GodMode>
               <CommandTitle>This is your command: Rohit Panel</CommandTitle>
-              <CommandCopy>Click a button to issue a command.</CommandCopy>
+              <CommandCopy>
+                Crack each mini-case to unlock the next reward.
+              </CommandCopy>
             </div>
             <LockButton onClick={lockScreen} type='button'>
               <FiLock aria-hidden />
@@ -1141,6 +1226,26 @@ export default function Samelle() {
           <CommandGrid>
             {commands.map((command) => {
               const Icon = command.icon;
+              const isUnlocked = unlockedRewards.has(command.id);
+
+              if (!isUnlocked) {
+                return (
+                  <CommandButton
+                    $accent={command.accent}
+                    key={command.id}
+                    onClick={() => {
+                      setSecretAnswer('');
+                      setSecretMessage('');
+                      setUnlockTarget(command);
+                    }}
+                    type='button'
+                  >
+                    <Icon aria-hidden size={22} />
+                    <span>{command.lockedLabel}</span>
+                    <FiLock aria-hidden />
+                  </CommandButton>
+                );
+              }
 
               if (command.kind === 'link') {
                 return (
@@ -1153,40 +1258,25 @@ export default function Samelle() {
                     target='_blank'
                   >
                     <Icon aria-hidden size={22} />
-                    <span>{command.label}</span>
+                    <span>{command.unlockedLabel}</span>
                     <FiExternalLink aria-hidden />
                   </CommandButton>
                 );
               }
 
               if (command.kind === 'thoughts') {
-                if (thoughtsUnlocked) {
-                  return (
-                    <CommandButton
-                      as='a'
-                      $accent={command.accent}
-                      href='https://x.com/BrohitTv'
-                      key={command.kind}
-                      rel='noreferrer'
-                      target='_blank'
-                    >
-                      <Icon aria-hidden size={22} />
-                      <span>Open my thoughts</span>
-                      <FiExternalLink aria-hidden />
-                    </CommandButton>
-                  );
-                }
-
                 return (
                   <CommandButton
+                    as='a'
                     $accent={command.accent}
+                    href='https://x.com/BrohitTv'
                     key={command.kind}
-                    onClick={() => setSecretPuzzleOpen(true)}
-                    type='button'
+                    rel='noreferrer'
+                    target='_blank'
                   >
                     <Icon aria-hidden size={22} />
-                    <span>{command.label}</span>
-                    <FiLock aria-hidden />
+                    <span>{command.unlockedLabel}</span>
+                    <FiExternalLink aria-hidden />
                   </CommandButton>
                 );
               }
@@ -1201,7 +1291,9 @@ export default function Samelle() {
                     type='button'
                   >
                     <Icon aria-hidden size={22} />
-                    <span>{foodSent ? 'Food request sent' : command.label}</span>
+                    <span>
+                      {foodSent ? 'Food request sent' : command.unlockedLabel}
+                    </span>
                     <FiSend aria-hidden />
                   </CommandButton>
                 );
@@ -1217,7 +1309,7 @@ export default function Samelle() {
                     type='button'
                   >
                     <Icon aria-hidden size={22} />
-                    <span>{command.label}</span>
+                    <span>{command.unlockedLabel}</span>
                     <FiRefreshCcw aria-hidden />
                   </CommandButton>
                 );
@@ -1234,7 +1326,7 @@ export default function Samelle() {
                   type='button'
                 >
                   <Icon aria-hidden size={22} />
-                  <span>{wasSent ? 'Command sent' : command.label}</span>
+                  <span>{wasSent ? 'Command sent' : command.unlockedLabel}</span>
                   <FiSend aria-hidden />
                 </CommandButton>
               );
@@ -1244,16 +1336,16 @@ export default function Samelle() {
           <Transmission aria-live='polite'>{transmission}</Transmission>
         </CommandFrame>
 
-        {secretPuzzleOpen && (
+        {unlockTarget && (
           <ModalBackdrop
             onMouseDown={(event) => {
               if (event.target === event.currentTarget && !secretChecking) {
-                setSecretPuzzleOpen(false);
+                setUnlockTarget(null);
               }
             }}
           >
             <ModalPanel
-              aria-labelledby='thought-vault-title'
+              aria-labelledby='reward-vault-title'
               aria-modal='true'
               role='dialog'
             >
@@ -1261,14 +1353,14 @@ export default function Samelle() {
                 <div>
                   <ModalKicker>
                     <FiKey aria-hidden /> secret challenge //{' '}
-                    {secretChallenge.caseNumber}
+                    {rewardChallenge.caseNumber}
                   </ModalKicker>
-                  <ModalTitle id='thought-vault-title'>Thought vault</ModalTitle>
+                  <ModalTitle id='reward-vault-title'>Reward vault</ModalTitle>
                 </div>
                 <ModalClose
-                  aria-label='Close thought vault'
+                  aria-label='Close reward vault'
                   disabled={secretChecking}
-                  onClick={() => setSecretPuzzleOpen(false)}
+                  onClick={() => setUnlockTarget(null)}
                   title='Close'
                   type='button'
                 >
@@ -1277,10 +1369,9 @@ export default function Samelle() {
               </ModalHeader>
               <SecretBody>
                 <SecretCopy>
-                  One more system stands between you and Rohit&apos;s unfiltered
-                  thoughts.
+                  Crack this case to unlock: {unlockTarget.unlockedLabel}.
                 </SecretCopy>
-                <SecretArtifact>{secretChallenge.artifact}</SecretArtifact>
+                <SecretArtifact>{rewardChallenge.artifact}</SecretArtifact>
                 <ModalForm onSubmit={checkSecretAnswer}>
                   <Field>
                     <FieldLabel htmlFor='secret-override-code'>
@@ -1300,7 +1391,7 @@ export default function Samelle() {
                     type='submit'
                   >
                     <FiLock aria-hidden />
-                    {secretChecking ? 'Checking...' : 'Unlock thoughts'}
+                    {secretChecking ? 'Checking...' : 'Unlock reward'}
                   </Button>
                   <ModalStatus
                     $tone={secretMessage ? 'error' : undefined}
